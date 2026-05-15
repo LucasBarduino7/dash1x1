@@ -1,65 +1,333 @@
-import Image from "next/image";
+import {
+  AlertTriangle,
+  CalendarCheck,
+  Eye,
+  Gauge,
+  HandCoins,
+  Layers,
+  MousePointerClick,
+  Percent,
+  ReceiptText,
+  ShoppingBag,
+  Target,
+  TrendingUp,
+  UserCheck,
+  Users,
+  Wallet,
+  Zap,
+} from 'lucide-react';
+import { fetchDashboardData } from '@/lib/dashboard';
+import { brl, num, pct } from '@/lib/format';
+import { BuyersTable } from '@/components/BuyersTable';
+import { Card } from '@/components/Card';
+import { CampaignsTable } from '@/components/CampaignsTable';
+import { FunnelChart } from '@/components/FunnelChart';
+import { Header } from '@/components/Header';
+import { KPI } from '@/components/KPI';
+import { RankedTable } from '@/components/RankedTable';
+import { AgeChart } from '@/components/charts/AgeChart';
+import { AgeQualifChart } from '@/components/charts/AgeQualifChart';
+import { QualificationDonut } from '@/components/charts/QualificationDonut';
+import { TimelineChart } from '@/components/charts/TimelineChart';
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+const NAME_FILTER = process.env.META_CAMPAIGN_FILTER || '[1X1]';
+
+export default async function Page() {
+  let data;
+  let error: string | null = null;
+  try {
+    data = await fetchDashboardData();
+  } catch (e) {
+    error = e instanceof Error ? e.message : String(e);
+  }
+
+  if (error || !data) {
+    return (
+      <main className="mx-auto max-w-7xl px-6 py-10">
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 p-6">
+          <h1 className="text-lg font-semibold text-rose-200">Falha ao carregar o dashboard</h1>
+          <pre className="mt-3 whitespace-pre-wrap break-words text-xs text-rose-200/80">
+            {error}
+          </pre>
         </div>
       </main>
-    </div>
+    );
+  }
+
+  return (
+    <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
+      <Header period={data.period} filter={NAME_FILTER} />
+
+      {data.warnings.length > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+            <div className="space-y-1 text-xs text-amber-200/90">
+              {data.warnings.map((w, i) => (
+                <p key={i}>{w}</p>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KPIs DESTACADOS — qualificação no topo (foco do dashboard) */}
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <KPI
+          label="Donos de agência"
+          value={num(data.leads.qualificados)}
+          hint={`${pct(data.leads.taxaQualificacao)} dos ${num(data.leads.total)} leads`}
+          tone="warn"
+          icon={UserCheck}
+          size="lg"
+        />
+        <KPI
+          label="Reuniões realizadas"
+          value={num(data.sales.reunioesRealizadas)}
+          hint={`${num(data.leads.agendados)} agendadas no mês`}
+          tone="good"
+          icon={CalendarCheck}
+          size="lg"
+        />
+        <KPI
+          label="Custo por dono de agência"
+          value={brl(data.qualif.custoPorLeadQualificado)}
+          hint={`${brl(data.meta.spendTotal)} ÷ ${num(data.leads.qualificados)}`}
+          tone="brand"
+          icon={Target}
+          size="lg"
+        />
+        <KPI
+          label="Custo por call realizada"
+          value={brl(data.sales.custoPorRealizada)}
+          hint={`${brl(data.meta.spendTotal)} ÷ ${num(data.sales.reunioesRealizadas)} realizadas`}
+          tone="brand"
+          icon={Zap}
+          size="lg"
+        />
+      </section>
+
+      {/* KPIs do funil */}
+      {(() => {
+        const taxaComparecimento =
+          data.leads.agendados > 0
+            ? (data.sales.reunioesRealizadas / data.leads.agendados) * 100
+            : 0;
+        return (
+          <section className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+            <KPI label="Investimento" value={brl(data.meta.spendTotal)} icon={Wallet} tone="brand" />
+            <KPI
+              label="Connect rate"
+              value={pct(data.meta.connectRate)}
+              hint="LP views / cliques"
+              icon={Eye}
+              tone={
+                data.meta.connectRate >= 70 ? 'good' : data.meta.connectRate >= 50 ? 'warn' : 'bad'
+              }
+            />
+            <KPI
+              label="Taxa de comparecimento"
+              value={pct(taxaComparecimento)}
+              hint={`${num(data.sales.reunioesRealizadas)} realizadas / ${num(data.leads.agendados)} agendadas`}
+              icon={CalendarCheck}
+              tone={
+                taxaComparecimento >= 70 ? 'good' : taxaComparecimento >= 50 ? 'warn' : 'bad'
+              }
+            />
+            <KPI
+              label="Taxa de conversão"
+              value={pct(data.sales.taxaConversao)}
+              hint={`${num(data.sales.totalVendas)} vendas / ${num(data.sales.reunioesRealizadas)} realizadas`}
+              icon={Percent}
+              tone={data.sales.taxaConversao >= 40 ? 'good' : data.sales.taxaConversao >= 20 ? 'warn' : 'bad'}
+            />
+            <KPI
+              label="Leads (Meta)"
+              value={num(data.meta.leadsMeta)}
+              hint="Vol. registrado pelo pixel"
+              icon={Users}
+            />
+            <KPI
+              label="CPL (Meta)"
+              value={brl(data.meta.cplMeta)}
+              hint="Custo por lead bruto"
+              icon={Target}
+            />
+          </section>
+        );
+      })()}
+
+      {/* Funis de conversão (geral + qualificados) */}
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card
+          title="Funil geral"
+          subtitle="Todos os leads do mês até a venda fechada"
+        >
+          <FunnelChart
+            stages={[
+              { label: 'Leads totais', value: data.leads.total, fill: '#71717a' },
+              { label: 'Agendamentos', value: data.leads.agendados, fill: '#8b5cf6' },
+              { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
+              { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
+            ]}
+          />
+        </Card>
+        <Card
+          title="Funil de qualificados"
+          subtitle="Apenas donos de agência — desconsidera o filtro de qualificação"
+        >
+          <FunnelChart
+            stages={[
+              { label: 'Donos de agência', value: data.leads.qualificados, fill: '#f59e0b' },
+              { label: 'Agendamentos', value: data.leads.agendados, fill: '#8b5cf6' },
+              { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
+              { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
+            ]}
+          />
+        </Card>
+      </section>
+
+      {/* Timeline + Qualificação Donut */}
+      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <Card
+          className="lg:col-span-2"
+          title="Investimento e leads por dia"
+          subtitle="Volume diário ao longo do período"
+        >
+          <TimelineChart data={data.dailyTimeline} />
+        </Card>
+        <Card
+          title="Qualificação dos leads"
+          subtitle="Status real (cor da planilha)"
+        >
+          <QualificationDonut stats={data.leads} />
+        </Card>
+      </section>
+
+      {/* Idade: leads brutos × donos de agência (estimado) */}
+      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card title="Leads por idade" subtitle="Volume total de leads (Meta) por faixa etária">
+          {data.ageBreakdown.length > 0 ? (
+            <AgeChart data={data.ageBreakdown} />
+          ) : (
+            <p className="py-12 text-center text-sm text-zinc-500">Sem dados de idade.</p>
+          )}
+        </Card>
+        <Card
+          title="Donos de agência por idade"
+          subtitle="Estimativa: idade ponderada pela taxa de qualificação de cada conjunto"
+        >
+          {data.qualifiedAgeBreakdown.length > 0 ? (
+            <AgeQualifChart data={data.qualifiedAgeBreakdown} />
+          ) : (
+            <p className="py-12 text-center text-sm text-zinc-500">
+              Sem dados pra estimar.
+            </p>
+          )}
+        </Card>
+      </section>
+
+      {/* Vendas / CAC — dados reais */}
+      <section className="mt-4">
+        <Card
+          title="Vendas e CAC"
+          subtitle={`Faturamento gerado a partir das campanhas [1X1] em maio. Match dos compradores apenas contra a planilha de origem (1x1).`}
+          right={
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
+              <ShoppingBag className="h-3.5 w-3.5" />
+              {data.sales.totalVendas} de {data.sales.buyers.length} compradores são 1x1
+            </span>
+          }
+        >
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+            <KPI
+              label="Vendas 1x1"
+              value={num(data.sales.totalVendas)}
+              hint={`de ${data.sales.buyers.length} compradores no mês`}
+              icon={ShoppingBag}
+              tone="good"
+              size="lg"
+            />
+            <KPI
+              label="Taxa de conversão"
+              value={pct(data.sales.taxaConversao)}
+              hint={`${num(data.sales.totalVendas)} vendas ÷ ${num(data.sales.reunioesRealizadas)} calls realizadas`}
+              icon={Percent}
+              tone={data.sales.taxaConversao >= 40 ? 'good' : data.sales.taxaConversao >= 20 ? 'warn' : 'bad'}
+              size="lg"
+            />
+            <KPI
+              label="Faturamento"
+              value={brl(data.sales.faturamento1x1)}
+              hint="entrada + parcela maio"
+              icon={HandCoins}
+              tone="good"
+              size="lg"
+            />
+            <KPI
+              label="Ticket médio"
+              value={brl(data.sales.ticketMedio)}
+              icon={ReceiptText}
+              tone="brand"
+              size="lg"
+            />
+            <KPI
+              label="CAC"
+              value={brl(data.sales.cac)}
+              hint={`${brl(data.meta.spendTotal)} ÷ ${data.sales.totalVendas} vendas`}
+              icon={Target}
+              tone="brand"
+              size="lg"
+            />
+            <KPI
+              label="ROAS"
+              value={`${data.sales.roas.toFixed(2).replace('.', ',')}×`}
+              hint={`R$ ${data.sales.roas.toFixed(2).replace('.', ',')} retorno por R$ 1 investido`}
+              icon={Gauge}
+              tone={data.sales.roas >= 2 ? 'good' : data.sales.roas >= 1 ? 'warn' : 'bad'}
+              size="lg"
+            />
+          </div>
+
+          <div className="mt-5">
+            <h3 className="mb-3 text-sm font-medium text-zinc-200">Compradores do mês</h3>
+            <BuyersTable buyers={data.sales.buyers} />
+          </div>
+        </Card>
+      </section>
+
+      {/* Ranking de Conjuntos com qualificação */}
+      <section className="mt-4">
+        <Card
+          title="Ranking de Conjuntos"
+          subtitle="Ordenado por nº de donos de agência (amarelo + verde). Cruzamento por adset_id entre planilha automatizada (origem) e planilha colorida (qualificação)."
+          right={
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-200">
+              <Layers className="h-3.5 w-3.5" />
+              {data.adsetsRanked.length} conjuntos
+            </span>
+          }
+        >
+          <RankedTable rows={data.adsetsRanked} entityLabel="Conjunto" limit={40} />
+        </Card>
+      </section>
+
+      {/* Tabela de Campanhas */}
+      <section className="mt-4">
+        <Card
+          title="Campanhas no período"
+          subtitle="Métricas brutas do Meta (sem cruzamento com planilha)."
+        >
+          <CampaignsTable rows={data.campaigns} />
+        </Card>
+      </section>
+
+      <footer className="mt-10 border-t border-zinc-900 pt-6 text-center text-xs text-zinc-500">
+        Dashboard apenas para leitura. Nenhuma alteração é feita em campanhas/conjuntos/anúncios do Meta Ads.
+      </footer>
+    </main>
   );
 }
