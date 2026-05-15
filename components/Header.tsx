@@ -1,6 +1,7 @@
 import { Calendar, Filter } from 'lucide-react';
 import { formatDateBR } from '@/lib/format';
 import { RefreshButton } from './RefreshButton';
+import { UserBadge } from './UserBadge';
 
 type Props = {
   period: { since: string; until: string };
@@ -32,6 +33,7 @@ export function Header({ period, filter }: Props) {
           {formatDateBR(period.since)} → {formatDateBR(period.until)}
         </span>
         <RefreshButton />
+        <UserBadge />
       </div>
     </header>
   );
