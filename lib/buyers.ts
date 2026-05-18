@@ -110,10 +110,24 @@ export function computeSales(
   /** Leads de campanhas 1x1 (aba maio + histórico filtrado). É a única fonte da verdade. */
   leads1x1: RawLead[],
   investmentTotal: number,
+  opts?: {
+    /** Filtra compradores por data de venda (yyyy-mm-dd inclusivo). */
+    period?: { since: string; until: string };
+    /** True quando o período é menor que o mês — overrides mensais não se aplicam. */
+    isSubperiod?: boolean;
+  },
 ): SalesData {
   const idx = buildIndexes(leads1x1);
 
-  const buyers: BuyerMatch[] = COMPRADORES_MAIO.map((b) => {
+  // Filtra compradores pelo período (quando definido).
+  const buyersPool = opts?.period
+    ? COMPRADORES_MAIO.filter(
+        (b) =>
+          b.date && b.date >= opts.period!.since && b.date <= opts.period!.until,
+      )
+    : COMPRADORES_MAIO;
+
+  const buyers: BuyerMatch[] = buyersPool.map((b) => {
     // Override manual tem prioridade
     if (b.is1x1 === true) {
       return {
@@ -158,18 +172,24 @@ export function computeSales(
   });
 
   const buyers1x1 = buyers.filter((b) => b.is1x1);
-  // Aplicar overrides quando definidos
-  const faturamento1x1 =
-    SALES_OVERRIDES.faturamento1x1 ?? buyers1x1.reduce((acc, b) => acc + b.recebidoMaio, 0);
-  const totalBrutoMes =
-    SALES_OVERRIDES.faturamentoBrutoMes ?? buyers.reduce((acc, b) => acc + b.recebidoMaio, 0);
-  const totalVendas = SALES_OVERRIDES.vendas1x1 ?? buyers1x1.length;
+
+  // Overrides são manuais e mensais — só se aplicam quando o período é o mês inteiro.
+  const useOverrides = !opts?.isSubperiod;
+  const faturamento1x1 = useOverrides
+    ? SALES_OVERRIDES.faturamento1x1 ?? buyers1x1.reduce((acc, b) => acc + b.recebidoMaio, 0)
+    : buyers1x1.reduce((acc, b) => acc + b.recebidoMaio, 0);
+  const totalBrutoMes = useOverrides
+    ? SALES_OVERRIDES.faturamentoBrutoMes ?? buyers.reduce((acc, b) => acc + b.recebidoMaio, 0)
+    : buyers.reduce((acc, b) => acc + b.recebidoMaio, 0);
+  const totalVendas = useOverrides
+    ? SALES_OVERRIDES.vendas1x1 ?? buyers1x1.length
+    : buyers1x1.length;
   const ticketMedio = totalVendas > 0 ? faturamento1x1 / totalVendas : 0;
   const cac = totalVendas > 0 ? investmentTotal / totalVendas : 0;
   const roas = investmentTotal > 0 ? faturamento1x1 / investmentTotal : 0;
 
-  // Reuniões realizadas: override OU fallback para agendados da planilha de cores
-  const reunioesRealizadas = SALES_OVERRIDES.reunioesRealizadas ?? 0;
+  // Reuniões realizadas: override (mensal) só vale no mês completo. Em sub-período não temos dado granular.
+  const reunioesRealizadas = useOverrides ? SALES_OVERRIDES.reunioesRealizadas ?? 0 : 0;
   const custoPorRealizada = reunioesRealizadas > 0 ? investmentTotal / reunioesRealizadas : 0;
   const taxaConversao = reunioesRealizadas > 0 ? (totalVendas / reunioesRealizadas) * 100 : 0;
 

@@ -144,30 +144,14 @@ export type BreakdownRow = {
   leads: number;
 };
 
-// --- Leads no período (tabela "Leads do dia") ---
-
-export type LeadRow = {
-  email: string;
-  phone: string;
-  nome: string;
-  faturamento: string;
-  status: LeadStatus;
-  date: string;
-  campaignId: string;
-  adsetId: string;
-  adsetName: string;
-  adId: string;
-  adName: string;
-};
-
 // --- Dashboard agregado ---
 
 export type DashboardData = {
   period: { since: string; until: string };
   /** Mês ativo (limites permitidos no date picker). */
   activeMonth: { since: string; until: string };
-  /** True quando period.since === period.until (foco em um único dia). */
-  singleDay: boolean;
+  /** True quando o período é menor que o mês ativo (sub-recorte). */
+  isSubperiod: boolean;
   meta: {
     spendTotal: number;
     impressions: number;
@@ -200,8 +184,6 @@ export type DashboardData = {
   dailyTimeline: { date: string; spend: number; leads: number }[];
   /** Vendas, CAC e ROAS */
   sales: SalesData;
-  /** Lista de leads do período (preenchida só quando singleDay = true). */
-  periodLeads: LeadRow[];
   /** Alertas/avisos sobre os dados (ex: leads não cruzados) */
   warnings: string[];
 };

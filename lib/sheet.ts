@@ -113,8 +113,12 @@ function parseDate(raw: string): string {
 }
 
 async function downloadXlsx(): Promise<ArrayBuffer> {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=xlsx`;
-  const res = await fetch(url, { cache: 'no-store' });
+  // Cache-buster: força a CDN do Google a devolver versão fresca em vez do XLSX cacheado.
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=xlsx&_=${Date.now()}`;
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+  });
   if (!res.ok) {
     throw new Error(`Falha ao baixar planilha: HTTP ${res.status}`);
   }

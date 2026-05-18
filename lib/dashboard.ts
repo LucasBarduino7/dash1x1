@@ -1,14 +1,7 @@
 // Função principal: combina Meta Ads + Planilha 1 (qualificação por cor) +
 // Planilha 2 (origem por conjunto/anúncio) cruzando por email + ID.
 
-import type {
-  DashboardData,
-  EnrichedLead,
-  Lead,
-  LeadRow,
-  LeadStatus,
-  RankedRow,
-} from './types';
+import type { DashboardData, EnrichedLead, Lead, LeadStatus, RankedRow } from './types';
 import { ACTIVE_MONTH, fetchMetaDashboard, type MetaInsightAgg, type Period } from './meta';
 import { computeLeadStats, fetchLeads, filterLeadsByPeriod } from './sheet';
 import { fetchRawLeads, fetchHistoricalLeads1x1 } from './raw-leads';
@@ -148,7 +141,8 @@ function rankByKey(
 }
 
 export async function fetchDashboardData(period: Period): Promise<DashboardData> {
-  const singleDay = period.since === period.until;
+  const isSubperiod =
+    period.since !== ACTIVE_MONTH.since || period.until !== ACTIVE_MONTH.until;
 
   const [meta, allLeadsByCor, allRawLeads, allHistoryLeads1x1] = await Promise.all([
     fetchMetaDashboard(period),
@@ -187,7 +181,7 @@ export async function fetchDashboardData(period: Period): Promise<DashboardData>
   // Compradores → vendas, CAC, ROAS
   // Pool 1x1 = aba MM OFICIAL [MAI/2026] (todos 1x1) + histórico filtrado [1X1]
   const pool1x1 = [...rawLeads, ...historyLeads1x1];
-  const sales = computeSales(pool1x1, meta.summary.spend);
+  const sales = computeSales(pool1x1, meta.summary.spend, { period, isSubperiod });
 
   // === Estimativa de idade dos donos de agência ===
   // Lógica: pra cada adset, a taxa de qualificação (donos/total leads na planilha)
@@ -225,15 +219,10 @@ export async function fetchDashboardData(period: Period): Promise<DashboardData>
     .filter((r) => r.qualif > 0.5)
     .sort((a, b) => b.qualif - a.qualif);
 
-  // Tabela "Leads do dia" — só monta quando o range é de 1 dia.
-  const periodLeads: LeadRow[] = singleDay
-    ? buildPeriodLeads(leadsByCor, rawLeads, meta.adsetMetrics, meta.adMetrics)
-    : [];
-
   return {
     period: meta.period,
     activeMonth: ACTIVE_MONTH,
-    singleDay,
+    isSubperiod,
     meta: {
       spendTotal: meta.summary.spend,
       impressions: meta.summary.impressions,
@@ -263,57 +252,6 @@ export async function fetchDashboardData(period: Period): Promise<DashboardData>
     regionBreakdown: meta.region,
     dailyTimeline: meta.timeline,
     sales,
-    periodLeads,
     warnings,
   };
-}
-
-/** Monta a lista enriquecida de leads do dia/período cruzando as 3 fontes. */
-function buildPeriodLeads(
-  leadsByCor: Lead[],
-  rawLeads: Awaited<ReturnType<typeof fetchRawLeads>>,
-  adsetMetrics: Map<string, MetaInsightAgg>,
-  adMetrics: Map<string, MetaInsightAgg>,
-): LeadRow[] {
-  // Index raw leads por email pra cruzar origem (conjunto/anúncio).
-  const rawByEmail = new Map<string, (typeof rawLeads)[number]>();
-  for (const r of rawLeads) {
-    if (r.email) rawByEmail.set(r.email.toLowerCase(), r);
-  }
-  // Index leads de cor por email pra cruzar status/nome/phone.
-  const corByEmail = new Map<string, Lead>();
-  for (const l of leadsByCor) {
-    if (l.email) corByEmail.set(l.email.toLowerCase(), l);
-  }
-
-  // Union: todo email que existe em qualquer planilha vira linha.
-  const emails = new Set<string>([...corByEmail.keys(), ...rawByEmail.keys()]);
-  const rows: LeadRow[] = [];
-
-  for (const email of emails) {
-    const cor = corByEmail.get(email);
-    const raw = rawByEmail.get(email);
-
-    rows.push({
-      email,
-      phone: cor?.phone || raw?.phone || '',
-      nome: cor?.nome || '',
-      faturamento: cor?.faturamento || raw?.faturamento || '',
-      status: cor?.status ?? 'nao_contactado',
-      date: raw?.date || cor?.date || '',
-      campaignId: raw?.campaignId || '',
-      adsetId: raw?.adsetId || '',
-      adsetName: raw?.adsetId ? adsetMetrics.get(raw.adsetId)?.name || '' : '',
-      adId: raw?.adId || '',
-      adName: raw?.adId ? adMetrics.get(raw.adId)?.name || '' : '',
-    });
-  }
-
-  // Ordena por data desc (mais recente primeiro), depois nome.
-  rows.sort(
-    (a, b) =>
-      (b.date || '').localeCompare(a.date || '') ||
-      a.nome.localeCompare(b.nome),
-  );
-  return rows;
 }

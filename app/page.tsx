@@ -18,14 +18,13 @@ import {
 } from 'lucide-react';
 import { fetchDashboardData } from '@/lib/dashboard';
 import { ACTIVE_MONTH } from '@/lib/meta';
-import { brl, num, pct, formatDateBR } from '@/lib/format';
+import { brl, num, pct } from '@/lib/format';
 import { BuyersTable } from '@/components/BuyersTable';
 import { Card } from '@/components/Card';
 import { CampaignsTable } from '@/components/CampaignsTable';
 import { FunnelChart } from '@/components/FunnelChart';
 import { Header } from '@/components/Header';
 import { KPI } from '@/components/KPI';
-import { LeadsTable } from '@/components/LeadsTable';
 import { RankedTable } from '@/components/RankedTable';
 import { AgeChart } from '@/components/charts/AgeChart';
 import { AgeQualifChart } from '@/components/charts/AgeQualifChart';
@@ -180,23 +179,6 @@ export default async function Page({
           </section>
         );
       })()}
-
-      {/* Leads do dia — só quando o range é de 1 dia */}
-      {data.singleDay && (
-        <section className="mt-6">
-          <Card
-            title={`Leads de ${formatDateBR(data.period.since)}`}
-            subtitle="Quem entrou nesse dia (cruzamento planilha de origem + qualificação). Status atualizado pela cor da planilha de cores."
-            right={
-              <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
-                {data.periodLeads.length} leads no dia
-              </span>
-            }
-          >
-            <LeadsTable rows={data.periodLeads} />
-          </Card>
-        </section>
-      )}
 
       {/* Funis de conversão (geral + qualificados) */}
       <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">

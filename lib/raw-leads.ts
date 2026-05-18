@@ -80,9 +80,12 @@ function isValidId(v: string): boolean {
 export async function fetchRawLeads(): Promise<RawLead[]> {
   const url =
     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
-    `?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}`;
+    `?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&_=${Date.now()}`;
 
-  const res = await fetch(url, { cache: 'no-store' });
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+  });
   if (!res.ok) {
     throw new Error(
       `Falha ao baixar planilha "${SHEET_TAB}": HTTP ${res.status}`,
@@ -128,8 +131,11 @@ export async function fetchRawLeads(): Promise<RawLead[]> {
  */
 export async function fetchHistoricalLeads1x1(): Promise<RawLead[]> {
   // A aba histórica é a default (sem ?sheet=) → primeira aba da planilha
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
-  const res = await fetch(url, { cache: 'no-store' });
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&_=${Date.now()}`;
+  const res = await fetch(url, {
+    cache: 'no-store',
+    headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' },
+  });
   if (!res.ok) {
     throw new Error(`Falha ao baixar histórico de leads: HTTP ${res.status}`);
   }
