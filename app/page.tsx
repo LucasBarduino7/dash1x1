@@ -17,13 +17,15 @@ import {
   Zap,
 } from 'lucide-react';
 import { fetchDashboardData } from '@/lib/dashboard';
-import { brl, num, pct } from '@/lib/format';
+import { ACTIVE_MONTH } from '@/lib/meta';
+import { brl, num, pct, formatDateBR } from '@/lib/format';
 import { BuyersTable } from '@/components/BuyersTable';
 import { Card } from '@/components/Card';
 import { CampaignsTable } from '@/components/CampaignsTable';
 import { FunnelChart } from '@/components/FunnelChart';
 import { Header } from '@/components/Header';
 import { KPI } from '@/components/KPI';
+import { LeadsTable } from '@/components/LeadsTable';
 import { RankedTable } from '@/components/RankedTable';
 import { AgeChart } from '@/components/charts/AgeChart';
 import { AgeQualifChart } from '@/components/charts/AgeQualifChart';
@@ -35,11 +37,30 @@ export const revalidate = 0;
 
 const NAME_FILTER = process.env.META_CAMPAIGN_FILTER || '[1X1]';
 
-export default async function Page() {
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+function clampToMonth(date: string | undefined, fallback: string): string {
+  if (!date || !ISO_DATE.test(date)) return fallback;
+  if (date < ACTIVE_MONTH.since) return ACTIVE_MONTH.since;
+  if (date > ACTIVE_MONTH.until) return ACTIVE_MONTH.until;
+  return date;
+}
+
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ since?: string; until?: string }>;
+}) {
+  const sp = await searchParams;
+  const since = clampToMonth(sp.since, ACTIVE_MONTH.since);
+  const untilRaw = clampToMonth(sp.until, ACTIVE_MONTH.until);
+  // garante since <= until
+  const until = untilRaw >= since ? untilRaw : since;
+
   let data;
   let error: string | null = null;
   try {
-    data = await fetchDashboardData();
+    data = await fetchDashboardData({ since, until });
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   }
@@ -59,7 +80,7 @@ export default async function Page() {
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
-      <Header period={data.period} filter={NAME_FILTER} />
+      <Header period={data.period} activeMonth={data.activeMonth} filter={NAME_FILTER} />
 
       {data.warnings.length > 0 && (
         <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
@@ -159,6 +180,23 @@ export default async function Page() {
           </section>
         );
       })()}
+
+      {/* Leads do dia — só quando o range é de 1 dia */}
+      {data.singleDay && (
+        <section className="mt-6">
+          <Card
+            title={`Leads de ${formatDateBR(data.period.since)}`}
+            subtitle="Quem entrou nesse dia (cruzamento planilha de origem + qualificação). Status atualizado pela cor da planilha de cores."
+            right={
+              <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
+                {data.periodLeads.length} leads no dia
+              </span>
+            }
+          >
+            <LeadsTable rows={data.periodLeads} />
+          </Card>
+        </section>
+      )}
 
       {/* Funis de conversão (geral + qualificados) */}
       <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -303,7 +341,7 @@ export default async function Page() {
       <section className="mt-4">
         <Card
           title="Ranking de Conjuntos"
-          subtitle="Ordenado por nº de donos de agência (amarelo + verde). Cruzamento por adset_id entre planilha automatizada (origem) e planilha colorida (qualificação)."
+          subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por adset_id entre planilha automatizada (origem) e planilha colorida (qualificação)."
           right={
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-200">
               <Layers className="h-3.5 w-3.5" />
@@ -312,6 +350,22 @@ export default async function Page() {
           }
         >
           <RankedTable rows={data.adsetsRanked} entityLabel="Conjunto" limit={40} />
+        </Card>
+      </section>
+
+      {/* Ranking de Anúncios com qualificação */}
+      <section className="mt-4">
+        <Card
+          title="Ranking de Anúncios"
+          subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por ad_id — só aparece se a planilha de origem trouxer o ID do anúncio."
+          right={
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-200">
+              <Layers className="h-3.5 w-3.5" />
+              {data.adsRanked.length} anúncios
+            </span>
+          }
+        >
+          <RankedTable rows={data.adsRanked} entityLabel="Anúncio" limit={40} />
         </Card>
       </section>
 

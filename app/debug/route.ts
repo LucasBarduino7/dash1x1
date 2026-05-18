@@ -1,10 +1,14 @@
 import { fetchDashboardData } from '@/lib/dashboard';
+import { ACTIVE_MONTH } from '@/lib/meta';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const data = await fetchDashboardData();
+    const url = new URL(req.url);
+    const since = url.searchParams.get('since') || ACTIVE_MONTH.since;
+    const until = url.searchParams.get('until') || ACTIVE_MONTH.until;
+    const data = await fetchDashboardData({ since, until });
     return Response.json({
       ok: true,
       meta_summary: data.meta,

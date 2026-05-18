@@ -8,8 +8,12 @@ const TOKEN = process.env.META_ACCESS_TOKEN!;
 const ACCOUNT = process.env.META_AD_ACCOUNT_ID!;
 const API_VERSION = process.env.META_API_VERSION || 'v23.0';
 const NAME_FILTER = process.env.META_CAMPAIGN_FILTER || '[1X1]';
-const SINCE = process.env.PERIOD_SINCE || '2026-05-01';
-const UNTIL = process.env.PERIOD_UNTIL || '2026-05-31';
+
+/** Limites do mês ativo (vêm das env vars, define o range permitido no date picker). */
+export const ACTIVE_MONTH = {
+  since: process.env.PERIOD_SINCE || '2026-05-01',
+  until: process.env.PERIOD_UNTIL || '2026-05-31',
+};
 
 const BASE = `https://graph.facebook.com/${API_VERSION}/act_${ACCOUNT}`;
 
@@ -47,9 +51,7 @@ function sumLeads(actions: MetaAction[] | undefined): number {
   return Math.max(pixel, onsiteWeb, lead);
 }
 
-function getPeriod(): { since: string; until: string } {
-  return { since: SINCE, until: UNTIL };
-}
+export type Period = { since: string; until: string };
 
 // --- Conjuntos de fields usados na Marketing API ---
 
@@ -74,11 +76,12 @@ const INSIGHT_FIELDS = [
 ].join(',');
 
 async function fetchInsights(opts: {
+  period: Period;
   level: 'account' | 'campaign' | 'adset' | 'ad';
   breakdowns?: string[];
   time_increment?: string;
 }): Promise<MetaInsight[]> {
-  const { since, until } = getPeriod();
+  const { since, until } = opts.period;
   const params: Record<string, string> = {
     level: opts.level,
     fields: INSIGHT_FIELDS,
@@ -175,19 +178,17 @@ function aggregateById(
   return map;
 }
 
-export async function fetchMetaDashboard(): Promise<MetaDashboard> {
-  const period = getPeriod();
-
+export async function fetchMetaDashboard(period: Period): Promise<MetaDashboard> {
   // Disparar todas as queries em paralelo (Marketing API permite)
   const [campaignsRaw, adsetsRaw, adsRaw, ageRaw, regionRaw, dailyRaw, ageByAdsetRaw] =
     await Promise.all([
-      fetchInsights({ level: 'campaign' }),
-      fetchInsights({ level: 'adset' }),
-      fetchInsights({ level: 'ad' }),
-      fetchInsights({ level: 'account', breakdowns: ['age'] }),
-      fetchInsights({ level: 'account', breakdowns: ['region'] }),
-      fetchInsights({ level: 'account', time_increment: '1' }),
-      fetchInsights({ level: 'adset', breakdowns: ['age'] }),
+      fetchInsights({ period, level: 'campaign' }),
+      fetchInsights({ period, level: 'adset' }),
+      fetchInsights({ period, level: 'ad' }),
+      fetchInsights({ period, level: 'account', breakdowns: ['age'] }),
+      fetchInsights({ period, level: 'account', breakdowns: ['region'] }),
+      fetchInsights({ period, level: 'account', time_increment: '1' }),
+      fetchInsights({ period, level: 'adset', breakdowns: ['age'] }),
     ]);
 
   // Campanhas

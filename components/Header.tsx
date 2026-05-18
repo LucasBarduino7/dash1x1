@@ -1,14 +1,15 @@
-import { Calendar, Filter } from 'lucide-react';
-import { formatDateBR } from '@/lib/format';
+import { Filter } from 'lucide-react';
+import { DateRangePicker } from './DateRangePicker';
 import { RefreshButton } from './RefreshButton';
 import { UserBadge } from './UserBadge';
 
 type Props = {
   period: { since: string; until: string };
+  activeMonth: { since: string; until: string };
   filter: string;
 };
 
-export function Header({ period, filter }: Props) {
+export function Header({ period, activeMonth, filter }: Props) {
   return (
     <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -28,10 +29,12 @@ export function Header({ period, filter }: Props) {
           <Filter className="h-3.5 w-3.5 text-violet-400" />
           Campanhas contendo <strong className="text-violet-200">{filter}</strong>
         </span>
-        <span className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300">
-          <Calendar className="h-3.5 w-3.5 text-emerald-400" />
-          {formatDateBR(period.since)} → {formatDateBR(period.until)}
-        </span>
+        <DateRangePicker
+          since={period.since}
+          until={period.until}
+          minDate={activeMonth.since}
+          maxDate={activeMonth.until}
+        />
         <RefreshButton />
         <UserBadge />
       </div>

@@ -50,10 +50,13 @@ export function RankedTable({
             <th className="px-3 py-2 text-right font-medium">Invest.</th>
             <th className="px-3 py-2 text-right font-medium">Leads</th>
             <th className="px-3 py-2 text-right font-medium">
-              <span title="Donos de agência (amarelo + verde)">🟡 Agência</span>
+              <span title="Donos de agência (amarelo + verde + roxo)">🟡 Agência</span>
             </th>
             <th className="px-3 py-2 text-right font-medium">
               <span title="Agendados (verde)">🟢 Reuniões</span>
+            </th>
+            <th className="px-3 py-2 text-right font-medium">
+              <span title="Dono de agência sem faturamento (roxo)">🟣 Sem fat.</span>
             </th>
             <th className="px-3 py-2 text-right font-medium">
               <span title="Desqualificados (vermelho)">🔴 Descarte</span>
@@ -67,7 +70,7 @@ export function RankedTable({
         <tbody>
           {displayed.map((r, idx) => {
             const sem = getSemaphore(r);
-            const totalAgencia = r.temAgencia + r.agendados;
+            const totalAgencia = r.temAgencia + r.agendados + r.donoSemFaturamento;
             return (
               <tr
                 key={r.name + idx}
@@ -101,6 +104,9 @@ export function RankedTable({
                 </td>
                 <td className="px-3 py-3 text-right tabular-nums text-emerald-300">
                   {num(r.agendados)}
+                </td>
+                <td className="px-3 py-3 text-right tabular-nums text-violet-300">
+                  {num(r.donoSemFaturamento)}
                 </td>
                 <td className="px-3 py-3 text-right tabular-nums text-rose-300/80">
                   {num(r.desqualificados)}

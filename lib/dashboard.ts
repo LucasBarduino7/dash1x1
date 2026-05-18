@@ -1,9 +1,16 @@
 // Função principal: combina Meta Ads + Planilha 1 (qualificação por cor) +
 // Planilha 2 (origem por conjunto/anúncio) cruzando por email + ID.
 
-import type { DashboardData, EnrichedLead, Lead, LeadStatus, RankedRow } from './types';
-import { fetchMetaDashboard, type MetaInsightAgg } from './meta';
-import { computeLeadStats, fetchLeads } from './sheet';
+import type {
+  DashboardData,
+  EnrichedLead,
+  Lead,
+  LeadRow,
+  LeadStatus,
+  RankedRow,
+} from './types';
+import { ACTIVE_MONTH, fetchMetaDashboard, type MetaInsightAgg, type Period } from './meta';
+import { computeLeadStats, fetchLeads, filterLeadsByPeriod } from './sheet';
 import { fetchRawLeads, fetchHistoricalLeads1x1 } from './raw-leads';
 import { computeSales } from './buyers';
 
@@ -64,17 +71,30 @@ function rankByKey(
 ): RankedRow[] {
   const byKey = new Map<
     string,
-    { total: number; agendados: number; temAgencia: number; desqualificados: number }
+    {
+      total: number;
+      agendados: number;
+      temAgencia: number;
+      donoSemFaturamento: number;
+      desqualificados: number;
+    }
   >();
 
   for (const lead of enriched) {
     const key = pickKey(lead);
     if (!key) continue;
     const cur =
-      byKey.get(key) ?? { total: 0, agendados: 0, temAgencia: 0, desqualificados: 0 };
+      byKey.get(key) ?? {
+        total: 0,
+        agendados: 0,
+        temAgencia: 0,
+        donoSemFaturamento: 0,
+        desqualificados: 0,
+      };
     cur.total++;
     if (lead.status === 'agendado') cur.agendados++;
     else if (lead.status === 'tem_agencia') cur.temAgencia++;
+    else if (lead.status === 'dono_sem_faturamento') cur.donoSemFaturamento++;
     else if (lead.status === 'desqualificado') cur.desqualificados++;
     byKey.set(key, cur);
   }
@@ -90,10 +110,12 @@ function rankByKey(
       total: 0,
       agendados: 0,
       temAgencia: 0,
+      donoSemFaturamento: 0,
       desqualificados: 0,
     };
     const meta = metaMap.get(key)!;
-    const qualificados = counts.agendados + counts.temAgencia;
+    const qualificados =
+      counts.agendados + counts.temAgencia + counts.donoSemFaturamento;
     rows.push({
       id: meta.id,
       name: meta.name,
@@ -107,6 +129,7 @@ function rankByKey(
       leadsTotal: counts.total,
       agendados: counts.agendados,
       temAgencia: counts.temAgencia,
+      donoSemFaturamento: counts.donoSemFaturamento,
       desqualificados: counts.desqualificados,
       qualificados,
       taxaQualificacao: counts.total > 0 ? (qualificados / counts.total) * 100 : 0,
@@ -124,13 +147,24 @@ function rankByKey(
   return rows;
 }
 
-export async function fetchDashboardData(): Promise<DashboardData> {
-  const [meta, leadsByCor, rawLeads, historyLeads1x1] = await Promise.all([
-    fetchMetaDashboard(),
+export async function fetchDashboardData(period: Period): Promise<DashboardData> {
+  const singleDay = period.since === period.until;
+
+  const [meta, allLeadsByCor, allRawLeads, allHistoryLeads1x1] = await Promise.all([
+    fetchMetaDashboard(period),
     fetchLeads(),
     fetchRawLeads(),
     fetchHistoricalLeads1x1(),
   ]);
+
+  // Filtra cada fonte pelo período selecionado (planilhas têm sempre o mês inteiro).
+  const leadsByCor = filterLeadsByPeriod(allLeadsByCor, period.since, period.until);
+  const rawLeads = allRawLeads.filter(
+    (l) => l.date && l.date >= period.since && l.date <= period.until,
+  );
+  const historyLeads1x1 = allHistoryLeads1x1.filter(
+    (l) => l.date && l.date >= period.since && l.date <= period.until,
+  );
 
   const byEmail = indexByEmail(leadsByCor);
   const { enriched, warnings } = enrichLeads(rawLeads, byEmail);
@@ -163,7 +197,12 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     if (!lead.adsetId) continue;
     const s = adsetStats.get(lead.adsetId) ?? { qualif: 0, total: 0 };
     s.total++;
-    if (lead.status === 'agendado' || lead.status === 'tem_agencia') s.qualif++;
+    if (
+      lead.status === 'agendado' ||
+      lead.status === 'tem_agencia' ||
+      lead.status === 'dono_sem_faturamento'
+    )
+      s.qualif++;
     adsetStats.set(lead.adsetId, s);
   }
 
@@ -186,8 +225,15 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     .filter((r) => r.qualif > 0.5)
     .sort((a, b) => b.qualif - a.qualif);
 
+  // Tabela "Leads do dia" — só monta quando o range é de 1 dia.
+  const periodLeads: LeadRow[] = singleDay
+    ? buildPeriodLeads(leadsByCor, rawLeads, meta.adsetMetrics, meta.adMetrics)
+    : [];
+
   return {
     period: meta.period,
+    activeMonth: ACTIVE_MONTH,
+    singleDay,
     meta: {
       spendTotal: meta.summary.spend,
       impressions: meta.summary.impressions,
@@ -217,6 +263,57 @@ export async function fetchDashboardData(): Promise<DashboardData> {
     regionBreakdown: meta.region,
     dailyTimeline: meta.timeline,
     sales,
+    periodLeads,
     warnings,
   };
+}
+
+/** Monta a lista enriquecida de leads do dia/período cruzando as 3 fontes. */
+function buildPeriodLeads(
+  leadsByCor: Lead[],
+  rawLeads: Awaited<ReturnType<typeof fetchRawLeads>>,
+  adsetMetrics: Map<string, MetaInsightAgg>,
+  adMetrics: Map<string, MetaInsightAgg>,
+): LeadRow[] {
+  // Index raw leads por email pra cruzar origem (conjunto/anúncio).
+  const rawByEmail = new Map<string, (typeof rawLeads)[number]>();
+  for (const r of rawLeads) {
+    if (r.email) rawByEmail.set(r.email.toLowerCase(), r);
+  }
+  // Index leads de cor por email pra cruzar status/nome/phone.
+  const corByEmail = new Map<string, Lead>();
+  for (const l of leadsByCor) {
+    if (l.email) corByEmail.set(l.email.toLowerCase(), l);
+  }
+
+  // Union: todo email que existe em qualquer planilha vira linha.
+  const emails = new Set<string>([...corByEmail.keys(), ...rawByEmail.keys()]);
+  const rows: LeadRow[] = [];
+
+  for (const email of emails) {
+    const cor = corByEmail.get(email);
+    const raw = rawByEmail.get(email);
+
+    rows.push({
+      email,
+      phone: cor?.phone || raw?.phone || '',
+      nome: cor?.nome || '',
+      faturamento: cor?.faturamento || raw?.faturamento || '',
+      status: cor?.status ?? 'nao_contactado',
+      date: raw?.date || cor?.date || '',
+      campaignId: raw?.campaignId || '',
+      adsetId: raw?.adsetId || '',
+      adsetName: raw?.adsetId ? adsetMetrics.get(raw.adsetId)?.name || '' : '',
+      adId: raw?.adId || '',
+      adName: raw?.adId ? adMetrics.get(raw.adId)?.name || '' : '',
+    });
+  }
+
+  // Ordena por data desc (mais recente primeiro), depois nome.
+  rows.sort(
+    (a, b) =>
+      (b.date || '').localeCompare(a.date || '') ||
+      a.nome.localeCompare(b.nome),
+  );
+  return rows;
 }

@@ -1,6 +1,12 @@
 // Tipos compartilhados do dashboard
 
-export type LeadStatus = 'agendado' | 'tem_agencia' | 'desqualificado' | 'nao_contactado' | 'separador';
+export type LeadStatus =
+  | 'agendado'
+  | 'tem_agencia'
+  | 'dono_sem_faturamento'
+  | 'desqualificado'
+  | 'nao_contactado'
+  | 'separador';
 
 export type Lead = {
   email: string;
@@ -9,6 +15,8 @@ export type Lead = {
   nome: string;
   observacao: string;
   status: LeadStatus;
+  /** Data de entrada (ISO yyyy-mm-dd) parseada do timestamp da planilha */
+  date: string;
   /** Cor hex original (debug) */
   colorHex: string;
 };
@@ -42,9 +50,11 @@ export type LeadStats = {
   total: number;
   agendados: number;
   temAgencia: number;
+  /** Dono de agência sem faturamento pra entrar no Scale (cor roxa) */
+  donoSemFaturamento: number;
   desqualificados: number;
   naoContactados: number;
-  /** Donos de agência = agendados + temAgencia */
+  /** Donos de agência = agendados + temAgencia + donoSemFaturamento */
   qualificados: number;
   /** % qualificados sobre o total */
   taxaQualificacao: number;
@@ -116,8 +126,9 @@ export type RankedRow = {
   leadsTotal: number;
   agendados: number;
   temAgencia: number;
+  donoSemFaturamento: number;
   desqualificados: number;
-  qualificados: number; // agendados + temAgencia
+  qualificados: number; // agendados + temAgencia + donoSemFaturamento
   /** Derivadas */
   taxaQualificacao: number; // % qualificados / total
   cplQualificado: number; // spend / qualificados
@@ -133,10 +144,30 @@ export type BreakdownRow = {
   leads: number;
 };
 
+// --- Leads no período (tabela "Leads do dia") ---
+
+export type LeadRow = {
+  email: string;
+  phone: string;
+  nome: string;
+  faturamento: string;
+  status: LeadStatus;
+  date: string;
+  campaignId: string;
+  adsetId: string;
+  adsetName: string;
+  adId: string;
+  adName: string;
+};
+
 // --- Dashboard agregado ---
 
 export type DashboardData = {
   period: { since: string; until: string };
+  /** Mês ativo (limites permitidos no date picker). */
+  activeMonth: { since: string; until: string };
+  /** True quando period.since === period.until (foco em um único dia). */
+  singleDay: boolean;
   meta: {
     spendTotal: number;
     impressions: number;
@@ -169,6 +200,8 @@ export type DashboardData = {
   dailyTimeline: { date: string; spend: number; leads: number }[];
   /** Vendas, CAC e ROAS */
   sales: SalesData;
+  /** Lista de leads do período (preenchida só quando singleDay = true). */
+  periodLeads: LeadRow[];
   /** Alertas/avisos sobre os dados (ex: leads não cruzados) */
   warnings: string[];
 };

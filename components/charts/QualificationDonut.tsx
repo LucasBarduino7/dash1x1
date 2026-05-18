@@ -8,6 +8,7 @@ export function QualificationDonut({ stats }: { stats: LeadStats }) {
   const data = [
     { name: 'Agendados', value: stats.agendados, color: '#10b981' },
     { name: 'Tem agência', value: stats.temAgencia, color: '#f59e0b' },
+    { name: 'Sem faturamento', value: stats.donoSemFaturamento, color: '#a855f7' },
     { name: 'Desqualificados', value: stats.desqualificados, color: '#ef4444' },
     { name: 'Não contactados', value: stats.naoContactados, color: '#52525b' },
   ];

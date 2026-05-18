@@ -11,6 +11,7 @@ const SHEET_TAB = process.env.GOOGLE_SHEET_TAB || 'Maio';
 // 🔴 vermelho → desqualificado (sem agência, sem dinheiro, número errado, etc.)
 // 🟡 amarelo → tem agência
 // 🟢 verde (qualquer tom) → agendado
+// 🟣 roxo → dono de agência sem faturamento pra entrar no Scale
 // 🔵 azul → separador de dias (ignorar)
 // ⚪ sem cor → ainda não contactado
 
@@ -40,6 +41,14 @@ const BLUE_HEX = new Set([
   'FFA4C2F4',
   'FF1155CC',
 ]);
+const PURPLE_HEX = new Set([
+  'FFD9D2E9', // roxo claro 3
+  'FFB4A7D6', // roxo claro 2
+  'FF8E7CC3', // roxo claro 1
+  'FF674EA7', // roxo
+  'FF351C75', // roxo escuro 1
+  'FF20124D', // roxo escuro 2
+]);
 
 function classifyByColor(rgb: string | null | undefined): LeadStatus {
   if (!rgb) return 'nao_contactado';
@@ -47,6 +56,7 @@ function classifyByColor(rgb: string | null | undefined): LeadStatus {
   if (RED_HEX.has(up)) return 'desqualificado';
   if (YELLOW_HEX.has(up)) return 'tem_agencia';
   if (GREEN_HEX.has(up)) return 'agendado';
+  if (PURPLE_HEX.has(up)) return 'dono_sem_faturamento';
   if (BLUE_HEX.has(up)) return 'separador';
 
   // Fallback: classificar por componente RGB dominante
@@ -57,6 +67,10 @@ function classifyByColor(rgb: string | null | undefined): LeadStatus {
     const b = parseInt(up.slice(6, 8), 16);
     // Branco / muito claro → não contactado
     if (r > 240 && g > 240 && b > 240) return 'nao_contactado';
+    // Roxo: vermelho e azul ambos relevantes, verde menor — testar ANTES do azul
+    if (b > 120 && r > 80 && b > g + 20 && r > g && Math.abs(r - b) < 90) {
+      return 'dono_sem_faturamento';
+    }
     // Azul dominante
     if (b > 180 && b > r + 40 && b > g + 20) return 'separador';
     // Vermelho dominante
@@ -67,6 +81,35 @@ function classifyByColor(rgb: string | null | undefined): LeadStatus {
     if (g > 130 && g > r && g > b) return 'agendado';
   }
   return 'nao_contactado';
+}
+
+/** Tenta extrair data ISO (yyyy-mm-dd) de um timestamp da planilha. */
+function parseDate(raw: string): string {
+  const s = (raw || '').trim();
+  if (!s) return '';
+  // dd/mm/yyyy [hh:mm[:ss]]
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if (m) {
+    const dd = m[1].padStart(2, '0');
+    const mm = m[2].padStart(2, '0');
+    let yyyy = m[3];
+    if (yyyy.length === 2) yyyy = '20' + yyyy;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  // ISO yyyy-mm-dd
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  // Serial number do Excel
+  const num = Number(s.replace(',', '.'));
+  if (Number.isFinite(num) && num > 25000 && num < 80000) {
+    const epoch = Date.UTC(1899, 11, 30);
+    const d = new Date(epoch + num * 86400000);
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return '';
 }
 
 async function downloadXlsx(): Promise<ArrayBuffer> {
@@ -119,6 +162,7 @@ export async function fetchLeads(): Promise<Lead[]> {
       nome,
       observacao,
       status,
+      date: parseDate(timestamp),
       colorHex: rgb || 'none',
     });
   });
@@ -126,18 +170,32 @@ export async function fetchLeads(): Promise<Lead[]> {
   return leads;
 }
 
+/** Filtra leads por período (inclusivo). Leads sem date são preservados. */
+export function filterLeadsByPeriod(
+  leads: Lead[],
+  since: string,
+  until: string,
+): Lead[] {
+  return leads.filter((l) => {
+    if (!l.date) return false;
+    return l.date >= since && l.date <= until;
+  });
+}
+
 export function computeLeadStats(leads: Lead[]): LeadStats {
   const total = leads.length;
   const agendados = leads.filter((l) => l.status === 'agendado').length;
   const temAgencia = leads.filter((l) => l.status === 'tem_agencia').length;
+  const donoSemFaturamento = leads.filter((l) => l.status === 'dono_sem_faturamento').length;
   const desqualificados = leads.filter((l) => l.status === 'desqualificado').length;
   const naoContactados = leads.filter((l) => l.status === 'nao_contactado').length;
-  const qualificados = agendados + temAgencia;
+  const qualificados = agendados + temAgencia + donoSemFaturamento;
 
   return {
     total,
     agendados,
     temAgencia,
+    donoSemFaturamento,
     desqualificados,
     naoContactados,
     qualificados,
