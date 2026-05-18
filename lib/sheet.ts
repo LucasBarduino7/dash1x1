@@ -87,7 +87,7 @@ function classifyByColor(rgb: string | null | undefined): LeadStatus {
 function parseDate(raw: string): string {
   const s = (raw || '').trim();
   if (!s) return '';
-  // dd/mm/yyyy [hh:mm[:ss]]
+  // dd/mm/yyyy (hh:mm:ss opcional)
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
   if (m) {
     const dd = m[1].padStart(2, '0');

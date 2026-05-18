@@ -50,7 +50,8 @@ export function DateRangePicker({ since, until, minDate, maxDate }: Props) {
         max={maxDate}
         onChange={(e) => update({ since: e.target.value })}
         disabled={pending}
-        className="bg-transparent text-zinc-100 outline-none [color-scheme:dark]"
+        style={{ colorScheme: 'dark' }}
+        className="bg-transparent text-zinc-100 outline-none"
       />
       <span className="text-zinc-600">→</span>
       <input
@@ -60,7 +61,8 @@ export function DateRangePicker({ since, until, minDate, maxDate }: Props) {
         max={maxDate}
         onChange={(e) => update({ until: e.target.value })}
         disabled={pending}
-        className="bg-transparent text-zinc-100 outline-none [color-scheme:dark]"
+        style={{ colorScheme: 'dark' }}
+        className="bg-transparent text-zinc-100 outline-none"
       />
       <span className="mx-1 h-4 w-px bg-zinc-700" />
       <button
