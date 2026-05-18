@@ -83,9 +83,27 @@ function classifyByColor(rgb: string | null | undefined): LeadStatus {
   return 'nao_contactado';
 }
 
+function dateToISO(d: Date): string {
+  if (!d || isNaN(d.getTime())) return '';
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 /** Tenta extrair data ISO (yyyy-mm-dd) de um timestamp da planilha. */
-function parseDate(raw: string): string {
-  const s = (raw || '').trim();
+function parseDate(raw: unknown): string {
+  if (raw == null) return '';
+  // ExcelJS pode devolver Date direto (Google Forms timestamp normalmente vira Date)
+  if (raw instanceof Date) return dateToISO(raw);
+  // Pode vir como objeto rico do ExcelJS (ex.: { richText: [...] } ou { result, formula })
+  if (typeof raw === 'object') {
+    const r = raw as { result?: unknown; text?: unknown };
+    if (r.result instanceof Date) return dateToISO(r.result);
+    if (typeof r.result === 'string' || typeof r.result === 'number') return parseDate(r.result);
+    if (typeof r.text === 'string') return parseDate(r.text);
+  }
+  const s = String(raw).trim();
   if (!s) return '';
   // dd/mm/yyyy (hh:mm:ss opcional)
   const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
@@ -141,7 +159,8 @@ export async function fetchLeads(): Promise<Lead[]> {
   const leads: Lead[] = [];
   sheet.eachRow({ includeEmpty: false }, (row) => {
     // Colunas: 1=timestamp, 2=email, 3=phone, 4=faturamento, 5=nome, 6=status_texto
-    const timestamp = (row.getCell(1).value ?? '').toString().trim();
+    const timestampRaw = row.getCell(1).value;
+    const timestamp = (timestampRaw ?? '').toString().trim();
     const email = (row.getCell(2).value ?? '').toString().trim();
     const phone = (row.getCell(3).value ?? '').toString().trim();
     const faturamento = (row.getCell(4).value ?? '').toString().trim();
@@ -166,7 +185,7 @@ export async function fetchLeads(): Promise<Lead[]> {
       nome,
       observacao,
       status,
-      date: parseDate(timestamp),
+      date: parseDate(timestampRaw),
       colorHex: rgb || 'none',
     });
   });
