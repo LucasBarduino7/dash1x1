@@ -5,12 +5,10 @@ import {
   Gauge,
   HandCoins,
   Layers,
-  MousePointerClick,
   Percent,
   ReceiptText,
   ShoppingBag,
   Target,
-  TrendingUp,
   UserCheck,
   Users,
   Wallet,
@@ -26,10 +24,13 @@ import { FunnelChart } from '@/components/FunnelChart';
 import { Header } from '@/components/Header';
 import { KPI } from '@/components/KPI';
 import { RankedTable } from '@/components/RankedTable';
+import { Sidebar } from '@/components/Sidebar';
+import { TABS, type TabKey } from '@/lib/tabs';
 import { AgeChart } from '@/components/charts/AgeChart';
 import { AgeQualifChart } from '@/components/charts/AgeQualifChart';
 import { QualificationDonut } from '@/components/charts/QualificationDonut';
 import { TimelineChart } from '@/components/charts/TimelineChart';
+import type { DashboardData } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -37,6 +38,7 @@ export const revalidate = 0;
 const NAME_FILTER = process.env.META_CAMPAIGN_FILTER || '[1X1]';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const VALID_TABS = new Set<TabKey>(TABS.map((t) => t.key));
 
 function clampToMonth(date: string | undefined, fallback: string): string {
   if (!date || !ISO_DATE.test(date)) return fallback;
@@ -45,16 +47,21 @@ function clampToMonth(date: string | undefined, fallback: string): string {
   return date;
 }
 
+function parseTab(value: string | undefined): TabKey {
+  if (value && VALID_TABS.has(value as TabKey)) return value as TabKey;
+  return 'principais';
+}
+
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ since?: string; until?: string }>;
+  searchParams: Promise<{ since?: string; until?: string; tab?: string }>;
 }) {
   const sp = await searchParams;
   const since = clampToMonth(sp.since, ACTIVE_MONTH.since);
   const untilRaw = clampToMonth(sp.until, ACTIVE_MONTH.until);
-  // garante since <= until
   const until = untilRaw >= since ? untilRaw : since;
+  const tab = parseTab(sp.tab);
 
   let data;
   let error: string | null = null;
@@ -94,7 +101,32 @@ export default async function Page({
         </div>
       )}
 
-      {/* KPIs DESTACADOS — qualificação no topo (foco do dashboard) */}
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+        <Sidebar active={tab} />
+        <div className="min-w-0 flex-1">
+          {tab === 'principais' && <SectionPrincipais data={data} />}
+          {tab === 'funis' && <SectionFunis data={data} />}
+          {tab === 'secundarias' && <SectionSecundarias data={data} />}
+          {tab === 'campanhas' && <SectionCampanhas data={data} />}
+        </div>
+      </div>
+
+      <footer className="mt-10 border-t border-zinc-900 pt-6 text-center text-xs text-zinc-500">
+        Dashboard apenas para leitura. Nenhuma alteração é feita em campanhas/conjuntos/anúncios do Meta Ads.
+      </footer>
+    </main>
+  );
+}
+
+// ---------- Seções ----------
+
+function SectionPrincipais({ data }: { data: DashboardData }) {
+  const taxaComparecimento =
+    data.leads.agendados > 0
+      ? (data.sales.reunioesRealizadas / data.leads.agendados) * 100
+      : 0;
+  return (
+    <div className="space-y-6">
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KPI
           label="Donos de agência"
@@ -130,131 +162,51 @@ export default async function Page({
         />
       </section>
 
-      {/* KPIs do funil */}
-      {(() => {
-        const taxaComparecimento =
-          data.leads.agendados > 0
-            ? (data.sales.reunioesRealizadas / data.leads.agendados) * 100
-            : 0;
-        return (
-          <section className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-            <KPI label="Investimento" value={brl(data.meta.spendTotal)} icon={Wallet} tone="brand" />
-            <KPI
-              label="Connect rate"
-              value={pct(data.meta.connectRate)}
-              hint="LP views / cliques"
-              icon={Eye}
-              tone={
-                data.meta.connectRate >= 70 ? 'good' : data.meta.connectRate >= 50 ? 'warn' : 'bad'
-              }
-            />
-            <KPI
-              label="Taxa de comparecimento"
-              value={pct(taxaComparecimento)}
-              hint={`${num(data.sales.reunioesRealizadas)} realizadas / ${num(data.leads.agendados)} agendadas`}
-              icon={CalendarCheck}
-              tone={
-                taxaComparecimento >= 70 ? 'good' : taxaComparecimento >= 50 ? 'warn' : 'bad'
-              }
-            />
-            <KPI
-              label="Taxa de conversão"
-              value={pct(data.sales.taxaConversao)}
-              hint={`${num(data.sales.totalVendas)} vendas / ${num(data.sales.reunioesRealizadas)} realizadas`}
-              icon={Percent}
-              tone={data.sales.taxaConversao >= 40 ? 'good' : data.sales.taxaConversao >= 20 ? 'warn' : 'bad'}
-            />
-            <KPI
-              label="Leads (Meta)"
-              value={num(data.meta.leadsMeta)}
-              hint="Vol. registrado pelo pixel"
-              icon={Users}
-            />
-            <KPI
-              label="CPL (Meta)"
-              value={brl(data.meta.cplMeta)}
-              hint="Custo por lead bruto"
-              icon={Target}
-            />
-          </section>
-        );
-      })()}
-
-      {/* Funis de conversão (geral + qualificados) */}
-      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card
-          title="Funil geral"
-          subtitle="Todos os leads do mês até a venda fechada"
-        >
-          <FunnelChart
-            stages={[
-              { label: 'Leads totais', value: data.leads.total, fill: '#71717a' },
-              { label: 'Agendamentos', value: data.leads.agendados, fill: '#8b5cf6' },
-              { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
-              { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
-            ]}
-          />
-        </Card>
-        <Card
-          title="Funil de qualificados"
-          subtitle="Apenas donos de agência — desconsidera o filtro de qualificação"
-        >
-          <FunnelChart
-            stages={[
-              { label: 'Donos de agência', value: data.leads.qualificados, fill: '#f59e0b' },
-              { label: 'Agendamentos', value: data.leads.agendados, fill: '#8b5cf6' },
-              { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
-              { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
-            ]}
-          />
-        </Card>
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        <KPI label="Investimento" value={brl(data.meta.spendTotal)} icon={Wallet} tone="brand" />
+        <KPI
+          label="Connect rate"
+          value={pct(data.meta.connectRate)}
+          hint="LP views / cliques"
+          icon={Eye}
+          tone={
+            data.meta.connectRate >= 70 ? 'good' : data.meta.connectRate >= 50 ? 'warn' : 'bad'
+          }
+        />
+        <KPI
+          label="Taxa de comparecimento"
+          value={pct(taxaComparecimento)}
+          hint={`${num(data.sales.reunioesRealizadas)} realizadas / ${num(data.leads.agendados)} agendadas`}
+          icon={CalendarCheck}
+          tone={
+            taxaComparecimento >= 70 ? 'good' : taxaComparecimento >= 50 ? 'warn' : 'bad'
+          }
+        />
+        <KPI
+          label="Taxa de conversão"
+          value={pct(data.sales.taxaConversao)}
+          hint={`${num(data.sales.totalVendas)} vendas / ${num(data.sales.reunioesRealizadas)} realizadas`}
+          icon={Percent}
+          tone={data.sales.taxaConversao >= 40 ? 'good' : data.sales.taxaConversao >= 20 ? 'warn' : 'bad'}
+        />
+        <KPI
+          label="Leads (Meta)"
+          value={num(data.meta.leadsMeta)}
+          hint="Vol. registrado pelo pixel"
+          icon={Users}
+        />
+        <KPI
+          label="CPL (Meta)"
+          value={brl(data.meta.cplMeta)}
+          hint="Custo por lead bruto"
+          icon={Target}
+        />
       </section>
 
-      {/* Timeline + Qualificação Donut */}
-      <section className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card
-          className="lg:col-span-2"
-          title="Investimento e leads por dia"
-          subtitle="Volume diário ao longo do período"
-        >
-          <TimelineChart data={data.dailyTimeline} />
-        </Card>
-        <Card
-          title="Qualificação dos leads"
-          subtitle="Status real (cor da planilha)"
-        >
-          <QualificationDonut stats={data.leads} />
-        </Card>
-      </section>
-
-      {/* Idade: leads brutos × donos de agência (estimado) */}
-      <section className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Leads por idade" subtitle="Volume total de leads (Meta) por faixa etária">
-          {data.ageBreakdown.length > 0 ? (
-            <AgeChart data={data.ageBreakdown} />
-          ) : (
-            <p className="py-12 text-center text-sm text-zinc-500">Sem dados de idade.</p>
-          )}
-        </Card>
-        <Card
-          title="Donos de agência por idade"
-          subtitle="Estimativa: idade ponderada pela taxa de qualificação de cada conjunto"
-        >
-          {data.qualifiedAgeBreakdown.length > 0 ? (
-            <AgeQualifChart data={data.qualifiedAgeBreakdown} />
-          ) : (
-            <p className="py-12 text-center text-sm text-zinc-500">
-              Sem dados pra estimar.
-            </p>
-          )}
-        </Card>
-      </section>
-
-      {/* Vendas / CAC — dados reais */}
-      <section className="mt-4">
+      <section>
         <Card
           title="Vendas e CAC"
-          subtitle={`Faturamento gerado a partir das campanhas [1X1] em maio. Match dos compradores apenas contra a planilha de origem (1x1).`}
+          subtitle="Faturamento gerado a partir das campanhas [1X1] em maio. Match dos compradores apenas contra a planilha de origem (1x1)."
           right={
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
               <ShoppingBag className="h-3.5 w-3.5" />
@@ -318,52 +270,114 @@ export default async function Page({
           </div>
         </Card>
       </section>
+    </div>
+  );
+}
 
-      {/* Ranking de Conjuntos com qualificação */}
-      <section className="mt-4">
+function SectionFunis({ data }: { data: DashboardData }) {
+  return (
+    <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <Card title="Funil geral" subtitle="Todos os leads do mês até a venda fechada">
+        <FunnelChart
+          stages={[
+            { label: 'Leads totais', value: data.leads.total, fill: '#71717a' },
+            { label: 'Agendamentos', value: data.leads.agendados, fill: '#8b5cf6' },
+            { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
+            { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
+          ]}
+        />
+      </Card>
+      <Card
+        title="Funil de qualificados"
+        subtitle="Apenas donos de agência — desconsidera o filtro de qualificação"
+      >
+        <FunnelChart
+          stages={[
+            { label: 'Donos de agência', value: data.leads.qualificados, fill: '#f59e0b' },
+            { label: 'Agendamentos', value: data.leads.agendados, fill: '#8b5cf6' },
+            { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
+            { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
+          ]}
+        />
+      </Card>
+    </section>
+  );
+}
+
+function SectionSecundarias({ data }: { data: DashboardData }) {
+  return (
+    <div className="space-y-4">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card
-          title="Ranking de Conjuntos"
-          subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por adset_id entre planilha automatizada (origem) e planilha colorida (qualificação)."
-          right={
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-200">
-              <Layers className="h-3.5 w-3.5" />
-              {data.adsetsRanked.length} conjuntos
-            </span>
-          }
+          className="lg:col-span-2"
+          title="Investimento e leads por dia"
+          subtitle="Volume diário ao longo do período"
         >
-          <RankedTable rows={data.adsetsRanked} entityLabel="Conjunto" limit={40} />
+          <TimelineChart data={data.dailyTimeline} />
+        </Card>
+        <Card title="Qualificação dos leads" subtitle="Status real (cor da planilha)">
+          <QualificationDonut stats={data.leads} />
         </Card>
       </section>
 
-      {/* Ranking de Anúncios com qualificação */}
-      <section className="mt-4">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Card title="Leads por idade" subtitle="Volume total de leads (Meta) por faixa etária">
+          {data.ageBreakdown.length > 0 ? (
+            <AgeChart data={data.ageBreakdown} />
+          ) : (
+            <p className="py-12 text-center text-sm text-zinc-500">Sem dados de idade.</p>
+          )}
+        </Card>
         <Card
-          title="Ranking de Anúncios"
-          subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por ad_id — só aparece se a planilha de origem trouxer o ID do anúncio."
-          right={
-            <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-200">
-              <Layers className="h-3.5 w-3.5" />
-              {data.adsRanked.length} anúncios
-            </span>
-          }
+          title="Donos de agência por idade"
+          subtitle="Estimativa: idade ponderada pela taxa de qualificação de cada conjunto"
         >
-          <RankedTable rows={data.adsRanked} entityLabel="Anúncio" limit={40} />
+          {data.qualifiedAgeBreakdown.length > 0 ? (
+            <AgeQualifChart data={data.qualifiedAgeBreakdown} />
+          ) : (
+            <p className="py-12 text-center text-sm text-zinc-500">Sem dados pra estimar.</p>
+          )}
         </Card>
       </section>
+    </div>
+  );
+}
 
-      {/* Tabela de Campanhas */}
-      <section className="mt-4">
-        <Card
-          title="Campanhas no período"
-          subtitle="Métricas brutas do Meta (sem cruzamento com planilha)."
-        >
-          <CampaignsTable rows={data.campaigns} />
-        </Card>
-      </section>
+function SectionCampanhas({ data }: { data: DashboardData }) {
+  return (
+    <div className="space-y-4">
+      <Card
+        title="Campanhas no período"
+        subtitle="Métricas brutas do Meta (sem cruzamento com planilha)."
+      >
+        <CampaignsTable rows={data.campaigns} />
+      </Card>
 
-      <footer className="mt-10 border-t border-zinc-900 pt-6 text-center text-xs text-zinc-500">
-        Dashboard apenas para leitura. Nenhuma alteração é feita em campanhas/conjuntos/anúncios do Meta Ads.
-      </footer>
-    </main>
+      <Card
+        title="Ranking de Conjuntos"
+        subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por adset_id entre planilha automatizada (origem) e planilha colorida (qualificação)."
+        right={
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-200">
+            <Layers className="h-3.5 w-3.5" />
+            {data.adsetsRanked.length} conjuntos
+          </span>
+        }
+      >
+        <RankedTable rows={data.adsetsRanked} entityLabel="Conjunto" limit={40} />
+      </Card>
+
+      <Card
+        title="Ranking de Anúncios"
+        subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por ad_id — só aparece se a planilha de origem trouxer o ID do anúncio."
+        right={
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-2.5 py-1 text-[11px] text-violet-200">
+            <Layers className="h-3.5 w-3.5" />
+            {data.adsRanked.length} anúncios
+          </span>
+        }
+      >
+        <RankedTable rows={data.adsRanked} entityLabel="Anúncio" limit={40} />
+      </Card>
+    </div>
   );
 }
