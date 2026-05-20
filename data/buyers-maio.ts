@@ -253,4 +253,17 @@ export const COMPRADORES_MAIO: Buyer[] = [
     closer: 'Otávio',
     obs: 'R$ 3.000 Pix + R$ 3.000 cartão.',
   },
+  {
+    id: '16',
+    date: '2026-05-20',
+    apelido: 'Marina',
+    plano: 'Scale Anual (12m)',
+    nome: 'Marina',
+    telefone: '+55 15 99772-7013',
+    email: 'michelfortunato.ads@gmail.com',
+    total: 14000,
+    recebidoMaio: 14000,
+    closer: '',
+    obs: 'R$ 14.000 no cartão hoje.',
+  },
 ];
