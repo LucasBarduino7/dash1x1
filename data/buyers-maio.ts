@@ -309,4 +309,18 @@ export const COMPRADORES_MAIO: Buyer[] = [
     obs: 'R$ 5.500,00 no cartão à vista.',
     is1x1: true, // confirmado manualmente
   },
+  {
+    id: '20',
+    date: '2026-05-30',
+    apelido: 'Wallace',
+    plano: '',
+    nome: '',
+    telefone: '',
+    email: '',
+    total: 5000,
+    recebidoMaio: 5000,
+    closer: '',
+    obs: 'R$ 5.000 vendido em maio.',
+    is1x1: true, // confirmado manualmente
+  },
 ];
