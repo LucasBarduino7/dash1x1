@@ -307,5 +307,6 @@ export const COMPRADORES_MAIO: Buyer[] = [
     recebidoMaio: 5500,
     closer: '',
     obs: 'R$ 5.500,00 no cartão à vista.',
+    is1x1: true, // confirmado manualmente
   },
 ];
