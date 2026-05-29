@@ -295,4 +295,17 @@ export const COMPRADORES_MAIO: Buyer[] = [
     obs: 'R$ 10.000 recebido em maio. Total contrato R$ 14.000.',
     is1x1: true, // confirmado manualmente
   },
+  {
+    id: '19',
+    date: '2026-05-29',
+    apelido: 'Juliana',
+    plano: 'Scale Express (6m)',
+    nome: '',
+    telefone: '+55 18 98123-4231',
+    email: '',
+    total: 5500,
+    recebidoMaio: 5500,
+    closer: '',
+    obs: 'R$ 5.500,00 no cartão à vista.',
+  },
 ];
