@@ -323,4 +323,18 @@ export const COMPRADORES_MAIO: Buyer[] = [
     obs: 'R$ 5.000 vendido em maio.',
     is1x1: true, // confirmado manualmente
   },
+  {
+    id: '21',
+    date: '2026-05-30',
+    apelido: 'Dionnaelli',
+    plano: 'Scale Anual (12m)',
+    nome: '',
+    telefone: '+55 53 8157-8660',
+    email: '',
+    total: 12000,
+    recebidoMaio: 6000,
+    closer: 'Otávio',
+    obs: 'Entrada R$ 6.000 Pix + 3x R$ 2.000 (parcelas fora de maio).',
+    is1x1: true, // confirmado manualmente
+  },
 ];
