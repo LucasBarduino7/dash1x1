@@ -15,7 +15,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { fetchDashboardData } from '@/lib/dashboard';
-import { ACTIVE_MONTH } from '@/lib/meta';
+import { MONTHS, getMonth } from '@/lib/months';
 import { brl, num, pct } from '@/lib/format';
 import { BuyersTable } from '@/components/BuyersTable';
 import { Card } from '@/components/Card';
@@ -40,10 +40,14 @@ const NAME_FILTER = process.env.META_CAMPAIGN_FILTER || '[1X1]';
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const VALID_TABS = new Set<TabKey>(TABS.map((t) => t.key));
 
-function clampToMonth(date: string | undefined, fallback: string): string {
+function clampToMonth(
+  date: string | undefined,
+  fallback: string,
+  bounds: { since: string; until: string },
+): string {
   if (!date || !ISO_DATE.test(date)) return fallback;
-  if (date < ACTIVE_MONTH.since) return ACTIVE_MONTH.since;
-  if (date > ACTIVE_MONTH.until) return ACTIVE_MONTH.until;
+  if (date < bounds.since) return bounds.since;
+  if (date > bounds.until) return bounds.until;
   return date;
 }
 
@@ -55,18 +59,20 @@ function parseTab(value: string | undefined): TabKey {
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ since?: string; until?: string; tab?: string }>;
+  searchParams: Promise<{ since?: string; until?: string; tab?: string; month?: string }>;
 }) {
   const sp = await searchParams;
-  const since = clampToMonth(sp.since, ACTIVE_MONTH.since);
-  const untilRaw = clampToMonth(sp.until, ACTIVE_MONTH.until);
+  const month = getMonth(sp.month);
+  const bounds = { since: month.since, until: month.until };
+  const since = clampToMonth(sp.since, month.since, bounds);
+  const untilRaw = clampToMonth(sp.until, month.until, bounds);
   const until = untilRaw >= since ? untilRaw : since;
   const tab = parseTab(sp.tab);
 
   let data;
   let error: string | null = null;
   try {
-    data = await fetchDashboardData({ since, until });
+    data = await fetchDashboardData(month, { since, until });
   } catch (e) {
     error = e instanceof Error ? e.message : String(e);
   }
@@ -86,7 +92,13 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
-      <Header period={data.period} activeMonth={data.activeMonth} filter={NAME_FILTER} />
+      <Header
+        period={data.period}
+        activeMonth={data.activeMonth}
+        filter={NAME_FILTER}
+        months={MONTHS.map((m) => ({ key: m.key, label: m.label }))}
+        activeMonthKey={month.key}
+      />
 
       {data.warnings.length > 0 && (
         <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
@@ -206,7 +218,7 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
       <section>
         <Card
           title="Vendas e CAC"
-          subtitle="Faturamento gerado a partir das campanhas [1X1] em maio. Match dos compradores apenas contra a planilha de origem (1x1)."
+          subtitle="Faturamento gerado a partir das campanhas [1X1] no mês. Match dos compradores apenas contra a planilha de origem (1x1)."
           right={
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
               <ShoppingBag className="h-3.5 w-3.5" />
@@ -234,7 +246,7 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
             <KPI
               label="Faturamento"
               value={brl(data.sales.faturamento1x1)}
-              hint="entrada + parcela maio"
+              hint="entrada + parcelas no mês"
               icon={HandCoins}
               tone="good"
               size="lg"

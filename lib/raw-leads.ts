@@ -1,11 +1,12 @@
-// Lê a aba "MM OFICIAL [MAI/2026]" da planilha automatizada.
-// Como a aba já é específica de maio, não precisamos filtrar por data.
+// Lê a aba rolante da planilha automatizada (ex.: "MM OFICIAL [MAI/2026]").
+// O tab acumula leads de vários meses por data; o filtro de período (em
+// dashboard.ts) é quem separa cada mês.
 // Colunas: Data, email, Telefone, Faturamento, Instagram, Campanha (id), Conjunto (id), Anuncio (id)
 
 import type { RawLead } from './types';
 
 const SHEET_ID = process.env.GOOGLE_SHEET_RAW_ID!;
-const SHEET_TAB = process.env.GOOGLE_SHEET_RAW_TAB || 'MM OFICIAL [MAI/2026]';
+const DEFAULT_SHEET_TAB = process.env.GOOGLE_SHEET_RAW_TAB || 'MM OFICIAL [MAI/2026]';
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -77,10 +78,10 @@ function isValidId(v: string): boolean {
   return /^\d{14,}$/.test(v.trim());
 }
 
-export async function fetchRawLeads(): Promise<RawLead[]> {
+export async function fetchRawLeads(sheetTab: string = DEFAULT_SHEET_TAB): Promise<RawLead[]> {
   const url =
     `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq` +
-    `?tqx=out:csv&sheet=${encodeURIComponent(SHEET_TAB)}&_=${Date.now()}`;
+    `?tqx=out:csv&sheet=${encodeURIComponent(sheetTab)}&_=${Date.now()}`;
 
   const res = await fetch(url, {
     cache: 'no-store',
@@ -88,7 +89,7 @@ export async function fetchRawLeads(): Promise<RawLead[]> {
   });
   if (!res.ok) {
     throw new Error(
-      `Falha ao baixar planilha "${SHEET_TAB}": HTTP ${res.status}`,
+      `Falha ao baixar planilha "${sheetTab}": HTTP ${res.status}`,
     );
   }
   const text = await res.text();

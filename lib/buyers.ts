@@ -1,8 +1,8 @@
 // Cruza lista de compradores com leads das duas planilhas.
 // Match por: telefone normalizado → email → nome (fuzzy fallback).
 
-import { COMPRADORES_MAIO } from '@/data/buyers-maio';
-import { SALES_OVERRIDES } from '@/data/overrides-maio';
+import type { Buyer } from '@/data/buyers-maio';
+import type { SalesOverrides } from './months';
 import type { BuyerMatch, LeadStatus, RawLead, SalesData } from './types';
 
 /** Tira tudo que não é dígito e pega os últimos 11 dígitos (DDD + número). */
@@ -79,7 +79,7 @@ function buildIndexes(leads1x1: RawLead[]): {
 }
 
 function findMatch(
-  buyer: (typeof COMPRADORES_MAIO)[number],
+  buyer: Buyer,
   idx: ReturnType<typeof buildIndexes>,
 ): { matchType: BuyerMatch['matchType']; leadStatus?: LeadStatus } {
   // 1) Telefone (11 dígitos)
@@ -107,10 +107,14 @@ function findMatch(
 }
 
 export function computeSales(
-  /** Leads de campanhas 1x1 (aba maio + histórico filtrado). É a única fonte da verdade. */
+  /** Leads de campanhas 1x1 (aba do mês + histórico filtrado). É a única fonte da verdade. */
   leads1x1: RawLead[],
   investmentTotal: number,
-  opts?: {
+  opts: {
+    /** Lista de compradores do mês selecionado. */
+    buyers: Buyer[];
+    /** Overrides manuais do mês selecionado. */
+    overrides: SalesOverrides;
     /** Filtra compradores por data de venda (yyyy-mm-dd inclusivo). */
     period?: { since: string; until: string };
     /** True quando o período é menor que o mês — overrides mensais não se aplicam. */
@@ -118,14 +122,15 @@ export function computeSales(
   },
 ): SalesData {
   const idx = buildIndexes(leads1x1);
+  const { buyers: monthBuyers, overrides } = opts;
 
   // Filtra compradores pelo período (quando definido).
-  const buyersPool = opts?.period
-    ? COMPRADORES_MAIO.filter(
+  const buyersPool = opts.period
+    ? monthBuyers.filter(
         (b) =>
           b.date && b.date >= opts.period!.since && b.date <= opts.period!.until,
       )
-    : COMPRADORES_MAIO;
+    : monthBuyers;
 
   const buyers: BuyerMatch[] = buyersPool.map((b) => {
     // Override manual tem prioridade
@@ -174,22 +179,22 @@ export function computeSales(
   const buyers1x1 = buyers.filter((b) => b.is1x1);
 
   // Overrides são manuais e mensais — só se aplicam quando o período é o mês inteiro.
-  const useOverrides = !opts?.isSubperiod;
+  const useOverrides = !opts.isSubperiod;
   const faturamento1x1 = useOverrides
-    ? SALES_OVERRIDES.faturamento1x1 ?? buyers1x1.reduce((acc, b) => acc + b.recebidoMaio, 0)
+    ? overrides.faturamento1x1 ?? buyers1x1.reduce((acc, b) => acc + b.recebidoMaio, 0)
     : buyers1x1.reduce((acc, b) => acc + b.recebidoMaio, 0);
   const totalBrutoMes = useOverrides
-    ? SALES_OVERRIDES.faturamentoBrutoMes ?? buyers.reduce((acc, b) => acc + b.recebidoMaio, 0)
+    ? overrides.faturamentoBrutoMes ?? buyers.reduce((acc, b) => acc + b.recebidoMaio, 0)
     : buyers.reduce((acc, b) => acc + b.recebidoMaio, 0);
   const totalVendas = useOverrides
-    ? SALES_OVERRIDES.vendas1x1 ?? buyers1x1.length
+    ? overrides.vendas1x1 ?? buyers1x1.length
     : buyers1x1.length;
   const ticketMedio = totalVendas > 0 ? faturamento1x1 / totalVendas : 0;
   const cac = totalVendas > 0 ? investmentTotal / totalVendas : 0;
   const roas = investmentTotal > 0 ? faturamento1x1 / investmentTotal : 0;
 
   // Reuniões realizadas: override (mensal) só vale no mês completo. Em sub-período não temos dado granular.
-  const reunioesRealizadas = useOverrides ? SALES_OVERRIDES.reunioesRealizadas ?? 0 : 0;
+  const reunioesRealizadas = useOverrides ? overrides.reunioesRealizadas ?? 0 : 0;
   const custoPorRealizada = reunioesRealizadas > 0 ? investmentTotal / reunioesRealizadas : 0;
   const taxaConversao = reunioesRealizadas > 0 ? (totalVendas / reunioesRealizadas) * 100 : 0;
 

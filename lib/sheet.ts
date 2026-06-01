@@ -5,7 +5,7 @@ import ExcelJS from 'exceljs';
 import type { Lead, LeadStats, LeadStatus } from './types';
 
 const SHEET_ID = process.env.GOOGLE_SHEET_ID!;
-const SHEET_TAB = process.env.GOOGLE_SHEET_TAB || 'Maio';
+const DEFAULT_SHEET_TAB = process.env.GOOGLE_SHEET_TAB || 'Maio';
 
 // Mapeamento de cor → status, baseado na análise da planilha:
 // 🔴 vermelho → desqualificado (sem agência, sem dinheiro, número errado, etc.)
@@ -143,17 +143,17 @@ async function downloadXlsx(): Promise<ArrayBuffer> {
   return await res.arrayBuffer();
 }
 
-export async function fetchLeads(): Promise<Lead[]> {
+export async function fetchLeads(sheetTab: string = DEFAULT_SHEET_TAB): Promise<Lead[]> {
   const buffer = await downloadXlsx();
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(buffer);
 
-  // Encontra a aba "Maio" (case-insensitive)
-  const target = SHEET_TAB.toLowerCase();
+  // Encontra a aba do mês (case-insensitive)
+  const target = sheetTab.toLowerCase();
   const sheet = workbook.worksheets.find((ws) => ws.name.toLowerCase() === target);
   if (!sheet) {
     const names = workbook.worksheets.map((w) => w.name).join(', ');
-    throw new Error(`Aba "${SHEET_TAB}" não encontrada. Abas disponíveis: ${names}`);
+    throw new Error(`Aba "${sheetTab}" não encontrada. Abas disponíveis: ${names}`);
   }
 
   const leads: Lead[] = [];

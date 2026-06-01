@@ -2,10 +2,11 @@
 // Planilha 2 (origem por conjunto/anúncio) cruzando por email + ID.
 
 import type { DashboardData, EnrichedLead, Lead, LeadStatus, RankedRow } from './types';
-import { ACTIVE_MONTH, fetchMetaDashboard, type MetaInsightAgg, type Period } from './meta';
+import { fetchMetaDashboard, type MetaInsightAgg, type Period } from './meta';
 import { computeLeadStats, fetchLeads, filterLeadsByPeriod } from './sheet';
 import { fetchRawLeads, fetchHistoricalLeads1x1 } from './raw-leads';
 import { computeSales } from './buyers';
+import type { MonthConfig } from './months';
 
 /** Constrói índice email→status a partir da planilha 1 (cores) */
 function indexByEmail(leads: Lead[]): Map<string, LeadStatus> {
@@ -140,14 +141,20 @@ function rankByKey(
   return rows;
 }
 
-export async function fetchDashboardData(period: Period): Promise<DashboardData> {
+export async function fetchDashboardData(
+  month: MonthConfig,
+  periodArg?: Period,
+): Promise<DashboardData> {
+  const activeMonth = { since: month.since, until: month.until };
+  // Período efetivo: o date picker pode restringir a um sub-período do mês.
+  const period: Period = periodArg ?? { since: month.since, until: month.until };
   const isSubperiod =
-    period.since !== ACTIVE_MONTH.since || period.until !== ACTIVE_MONTH.until;
+    period.since !== activeMonth.since || period.until !== activeMonth.until;
 
   const [meta, allLeadsByCor, allRawLeads, allHistoryLeads1x1] = await Promise.all([
     fetchMetaDashboard(period),
-    fetchLeads(),
-    fetchRawLeads(),
+    fetchLeads(month.sheetTab),
+    fetchRawLeads(month.rawSheetTab),
     fetchHistoricalLeads1x1(),
   ]);
 
@@ -179,9 +186,14 @@ export async function fetchDashboardData(period: Period): Promise<DashboardData>
   }
 
   // Compradores → vendas, CAC, ROAS
-  // Pool 1x1 = aba MM OFICIAL [MAI/2026] (todos 1x1) + histórico filtrado [1X1]
+  // Pool 1x1 = aba rolante MM (filtrada por data) + histórico filtrado [1X1]
   const pool1x1 = [...rawLeads, ...historyLeads1x1];
-  const sales = computeSales(pool1x1, meta.summary.spend, { period, isSubperiod });
+  const sales = computeSales(pool1x1, meta.summary.spend, {
+    buyers: month.buyers,
+    overrides: month.overrides,
+    period,
+    isSubperiod,
+  });
 
   // === Estimativa de idade dos donos de agência ===
   // Lógica: pra cada adset, a taxa de qualificação (donos/total leads na planilha)
@@ -221,7 +233,7 @@ export async function fetchDashboardData(period: Period): Promise<DashboardData>
 
   return {
     period: meta.period,
-    activeMonth: ACTIVE_MONTH,
+    activeMonth,
     isSubperiod,
     meta: {
       spendTotal: meta.summary.spend,

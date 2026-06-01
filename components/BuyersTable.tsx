@@ -37,7 +37,7 @@ export function BuyersTable({ buyers }: { buyers: BuyerMatch[] }) {
             <th className="px-3 py-2 font-medium">Comprador</th>
             <th className="px-3 py-2 font-medium">Plano</th>
             <th className="px-3 py-2 text-right font-medium">Total contrato</th>
-            <th className="px-3 py-2 text-right font-medium">Recebido maio</th>
+            <th className="px-3 py-2 text-right font-medium">Recebido no mês</th>
             <th className="px-3 py-2 text-center font-medium">Match</th>
             <th className="px-3 py-2 text-center font-medium">1x1?</th>
           </tr>

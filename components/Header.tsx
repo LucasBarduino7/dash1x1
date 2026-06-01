@@ -1,5 +1,6 @@
 import { Filter } from 'lucide-react';
 import { DateRangePicker } from './DateRangePicker';
+import { MonthTabs } from './MonthTabs';
 import { RefreshButton } from './RefreshButton';
 import { UserBadge } from './UserBadge';
 
@@ -7,9 +8,11 @@ type Props = {
   period: { since: string; until: string };
   activeMonth: { since: string; until: string };
   filter: string;
+  months: { key: string; label: string }[];
+  activeMonthKey: string;
 };
 
-export function Header({ period, activeMonth, filter }: Props) {
+export function Header({ period, activeMonth, filter, months, activeMonthKey }: Props) {
   return (
     <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -22,6 +25,9 @@ export function Header({ period, activeMonth, filter }: Props) {
         <p className="mt-1 text-sm text-zinc-400">
           Performance das campanhas de captação 1×1 com qualificação manual
         </p>
+        <div className="mt-3">
+          <MonthTabs months={months} active={activeMonthKey} />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
