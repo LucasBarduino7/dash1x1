@@ -1,5 +1,6 @@
 import {
   AlertTriangle,
+  BadgeCheck,
   CalendarCheck,
   Eye,
   Gauge,
@@ -24,6 +25,7 @@ import { FunnelChart } from '@/components/FunnelChart';
 import { Header } from '@/components/Header';
 import { KPI } from '@/components/KPI';
 import { RankedTable } from '@/components/RankedTable';
+import { ValidatedTable } from '@/components/ValidatedTable';
 import { Sidebar } from '@/components/Sidebar';
 import { TABS, type TabKey } from '@/lib/tabs';
 import { AgeChart } from '@/components/charts/AgeChart';
@@ -120,6 +122,7 @@ export default async function Page({
           {tab === 'funis' && <SectionFunis data={data} />}
           {tab === 'secundarias' && <SectionSecundarias data={data} />}
           {tab === 'campanhas' && <SectionCampanhas data={data} />}
+          {tab === 'validados' && <SectionValidados data={data} />}
         </div>
       </div>
 
@@ -389,6 +392,31 @@ function SectionCampanhas({ data }: { data: DashboardData }) {
         }
       >
         <RankedTable rows={data.adsRanked} entityLabel="Anúncio" limit={40} />
+      </Card>
+    </div>
+  );
+}
+
+function SectionValidados({ data }: { data: DashboardData }) {
+  const { thresholds, adsets } = data.validados;
+  return (
+    <div className="space-y-4">
+      <Card
+        title="Públicos e criativos validados"
+        subtitle={`Um público (conjunto) é validado quando já passou de ${brl(thresholds.minSpend)} de investimento mantendo pelo menos ${pct(thresholds.minTaxaAgendamento)} de agendamentos. Dentro dele, só entram os criativos que também batem ${pct(thresholds.minTaxaAgendamento)} — cada par público + criativo validado.`}
+        right={
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
+            <BadgeCheck className="h-3.5 w-3.5" />
+            {adsets.length} público{adsets.length === 1 ? '' : 's'}
+          </span>
+        }
+      >
+        <ValidatedTable rows={adsets} />
+        <p className="mt-3 text-xs text-zinc-500">
+          Critério: investimento ≥ {brl(thresholds.minSpend)} por conjunto{' '}
+          <span className="text-zinc-600">e</span> taxa de agendamento ≥{' '}
+          {pct(thresholds.minTaxaAgendamento)} (no público e em cada criativo).
+        </p>
       </Card>
     </div>
   );

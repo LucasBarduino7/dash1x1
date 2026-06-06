@@ -37,6 +37,24 @@ export async function GET(req: Request) {
       campaigns_count: data.campaigns.length,
       adsets_ranked_count: data.adsetsRanked.length,
       ads_ranked_count: data.adsRanked.length,
+      validados: {
+        thresholds: data.validados.thresholds,
+        count: data.validados.adsets.length,
+        adsets: data.validados.adsets.map((a) => ({
+          name: a.name,
+          id: a.id,
+          spend: Math.round(a.spend),
+          leads: a.leadsTotal,
+          agendados: a.agendados,
+          taxaAgendamento: Math.round(a.taxaAgendamento * 10) / 10,
+          criativos: a.criativos.map((c) => ({
+            name: c.name,
+            leads: c.leadsTotal,
+            agendados: c.agendados,
+            taxa: Math.round(c.taxaAgendamento * 10) / 10,
+          })),
+        })),
+      },
       age_breakdown_total: data.ageBreakdown.map((a) => ({ age: a.key, leads: a.leads })),
       age_breakdown_qualified: data.qualifiedAgeBreakdown.map((a) => ({
         age: a.key,

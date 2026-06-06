@@ -13,5 +13,5 @@ export const SALES_OVERRIDES = {
   vendas1x1: undefined as number | undefined,
 
   /** Reuniões REALIZADAS no mês (não as agendadas — só as que aconteceram). */
-  reunioesRealizadas: undefined as number | undefined,
+  reunioesRealizadas: 5 as number | undefined,
 };

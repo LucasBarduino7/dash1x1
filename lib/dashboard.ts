@@ -1,12 +1,96 @@
 // Função principal: combina Meta Ads + Planilha 1 (qualificação por cor) +
 // Planilha 2 (origem por conjunto/anúncio) cruzando por email + ID.
 
-import type { DashboardData, EnrichedLead, Lead, LeadStatus, RankedRow } from './types';
+import type {
+  DashboardData,
+  EnrichedLead,
+  Lead,
+  LeadStatus,
+  RankedRow,
+  ValidatedAdset,
+  ValidatedCreative,
+} from './types';
 import { fetchMetaDashboard, type MetaInsightAgg, type Period } from './meta';
 import { computeLeadStats, fetchLeads, filterLeadsByPeriod } from './sheet';
 import { fetchRawLeads, fetchHistoricalLeads1x1 } from './raw-leads';
 import { computeSales } from './buyers';
 import type { MonthConfig } from './months';
+
+// Critérios de validação de um público (conjunto): só vira "validado" quando já
+// teve investimento suficiente E mantém uma taxa de agendamento alta.
+const VALID_MIN_SPEND = Number(process.env.VALID_MIN_SPEND) || 1000; // R$ por conjunto
+const VALID_MIN_TAXA_AGENDAMENTO = Number(process.env.VALID_MIN_TAXA_AGEND) || 40; // %
+
+/**
+ * Validação por par público + criativo:
+ *  - o público (conjunto) precisa ter passado de VALID_MIN_SPEND de investimento
+ *    (gasto vem do Meta) e manter pelo menos VALID_MIN_TAXA_AGENDAMENTO% de
+ *    agendamentos no geral;
+ *  - dentro dele, só entram os criativos (anúncios) que TAMBÉM têm ao menos
+ *    VALID_MIN_TAXA_AGENDAMENTO% de agendamento — esses são os pares validados.
+ * A ligação anúncio→conjunto vem da própria planilha MM (cada lead carrega os dois
+ * IDs). Sem custo por criativo: o investimento é avaliado só no nível de público.
+ */
+function computeValidados(
+  adsetsRanked: RankedRow[],
+  enriched: EnrichedLead[],
+  adMetrics: Map<string, MetaInsightAgg>,
+): ValidatedAdset[] {
+  // Públicos que passaram no gate (investimento + taxa geral)
+  const candidates = adsetsRanked
+    .map((r) => ({
+      ...r,
+      taxaAgendamento: r.leadsTotal > 0 ? (r.agendados / r.leadsTotal) * 100 : 0,
+      criativos: [] as ValidatedCreative[],
+    }))
+    .filter(
+      (r) =>
+        r.spend >= VALID_MIN_SPEND &&
+        r.taxaAgendamento >= VALID_MIN_TAXA_AGENDAMENTO,
+    );
+
+  const candIds = new Set(candidates.map((c) => c.id));
+
+  // adsetId → (adId → contagem) a partir dos leads enriquecidos
+  const byAdset = new Map<string, Map<string, { total: number; agendados: number }>>();
+  for (const l of enriched) {
+    if (!l.adsetId || !l.adId || !candIds.has(l.adsetId)) continue;
+    let ads = byAdset.get(l.adsetId);
+    if (!ads) {
+      ads = new Map();
+      byAdset.set(l.adsetId, ads);
+    }
+    const cur = ads.get(l.adId) ?? { total: 0, agendados: 0 };
+    cur.total++;
+    if (l.status === 'agendado') cur.agendados++;
+    ads.set(l.adId, cur);
+  }
+
+  const validated: ValidatedAdset[] = [];
+  for (const v of candidates) {
+    const ads = byAdset.get(v.id);
+    if (ads && ads.size > 0) {
+      // Há dado de criativo → só pares com taxa ≥ mínimo são validados
+      const criativos = Array.from(ads.entries())
+        .map(([adId, c]) => ({
+          id: adId,
+          name: adMetrics.get(adId)?.name || adId,
+          leadsTotal: c.total,
+          agendados: c.agendados,
+          taxaAgendamento: c.total > 0 ? (c.agendados / c.total) * 100 : 0,
+        }))
+        .filter((c) => c.taxaAgendamento >= VALID_MIN_TAXA_AGENDAMENTO)
+        .sort((a, b) => b.taxaAgendamento - a.taxaAgendamento || b.agendados - a.agendados);
+      if (criativos.length === 0) continue; // nenhum criativo bateu o critério
+      v.criativos = criativos;
+    }
+    // sem dado de criativo → validado no nível de público (criativos vazio)
+    validated.push(v);
+  }
+
+  validated.sort((a, b) => b.taxaAgendamento - a.taxaAgendamento || b.spend - a.spend);
+  return validated;
+}
 
 /** Constrói índice email→status a partir da planilha 1 (cores) */
 function indexByEmail(leads: Lead[]): Map<string, LeadStatus> {
@@ -259,6 +343,13 @@ export async function fetchDashboardData(
     campaigns: meta.campaigns,
     adsetsRanked,
     adsRanked,
+    validados: {
+      thresholds: {
+        minSpend: VALID_MIN_SPEND,
+        minTaxaAgendamento: VALID_MIN_TAXA_AGENDAMENTO,
+      },
+      adsets: computeValidados(adsetsRanked, enriched, meta.adMetrics),
+    },
     ageBreakdown: meta.age,
     qualifiedAgeBreakdown,
     regionBreakdown: meta.region,

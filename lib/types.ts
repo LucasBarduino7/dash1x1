@@ -135,6 +135,24 @@ export type RankedRow = {
   custoPorReuniao: number; // spend / agendados
 };
 
+/** Criativo (anúncio) que rodou dentro de um público validado */
+export type ValidatedCreative = {
+  id: string;
+  name: string;
+  leadsTotal: number;
+  agendados: number;
+  /** % agendados / leads do criativo */
+  taxaAgendamento: number;
+};
+
+/** Conjunto (público) que passou nos critérios de validação de teste */
+export type ValidatedAdset = RankedRow & {
+  /** % de agendamentos sobre os leads totais (critério de validação) */
+  taxaAgendamento: number;
+  /** Criativos que rodaram nesse público (sem custo individual) */
+  criativos: ValidatedCreative[];
+};
+
 export type BreakdownRow = {
   key: string;
   spend: number;
@@ -177,6 +195,11 @@ export type DashboardData = {
   adsetsRanked: RankedRow[];
   /** Ranking de anúncios/criativos cruzados com qualificação */
   adsRanked: RankedRow[];
+  /** Públicos (conjuntos) validados: investimento mínimo + taxa de agendamento mínima */
+  validados: {
+    thresholds: { minSpend: number; minTaxaAgendamento: number };
+    adsets: ValidatedAdset[];
+  };
   ageBreakdown: BreakdownRow[];
   /** Distribuição estimada de idade dos donos de agência (qualificados) */
   qualifiedAgeBreakdown: { key: string; qualif: number }[];
