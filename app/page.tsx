@@ -1,24 +1,13 @@
 import Link from 'next/link';
-import {
-  ArrowRight,
-  AtSign,
-  Eye,
-  HandCoins,
-  Heart,
-  ShoppingCart,
-  Target,
-  Ticket,
-  TrendingUp,
-  Users,
-  Wallet,
-} from 'lucide-react';
+import { ArrowRight, Users } from 'lucide-react';
 import { fetchDashboardData } from '@/lib/onex1/dashboard';
 import { getMonth } from '@/lib/onex1/months';
 import { fetchWorkshopDashboard } from '@/lib/workshop/dashboard';
 import { fetchSocialSummary } from '@/lib/social/instagram';
-import { brl, num } from '@/lib/shared/format';
-import { KPI } from '@/components/onex1/KPI';
+import { num } from '@/lib/shared/format';
 import { Card } from '@/components/onex1/Card';
+import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut';
+import { SalesChart } from '@/components/workshop/charts/SalesChart';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -43,7 +32,7 @@ function VerTudo({ href }: { href: string }) {
 
 function Indisponivel() {
   return (
-    <p className="py-6 text-center text-sm text-zinc-500">
+    <p className="grid h-[240px] place-items-center text-sm text-zinc-500">
       Dados indisponíveis no momento.
     </p>
   );
@@ -51,13 +40,26 @@ function Indisponivel() {
 
 export default async function Geral() {
   const month = getMonth(undefined);
-  const social30 = last30();
 
   const [onex1R, workshopR, socialR] = await Promise.allSettled([
     fetchDashboardData(month, { since: month.since, until: month.until }),
     fetchWorkshopDashboard(),
-    fetchSocialSummary(social30),
+    fetchSocialSummary(last30()),
   ]);
+
+  // Timeline combinada do workshop (ingressos por dia + investimento por dia)
+  let workshopChart: { date: string; ingressos: number; spend: number }[] = [];
+  if (workshopR.status === 'fulfilled') {
+    const w = workshopR.value;
+    const spendByDate = new Map(w.meta.timeline.map((t) => [t.date, t.spend]));
+    const ingByDate = new Map(w.kiwify.timeline.map((t) => [t.date, t.ingressos]));
+    const dates = Array.from(new Set([...spendByDate.keys(), ...ingByDate.keys()])).sort();
+    workshopChart = dates.map((date) => ({
+      date,
+      ingressos: ingByDate.get(date) ?? 0,
+      spend: spendByDate.get(date) ?? 0,
+    }));
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
@@ -66,53 +68,71 @@ export default async function Geral() {
         <p className="text-sm text-zinc-500">Resumo dos dashboards do ecossistema Scale</p>
       </div>
 
-      <div className="space-y-6">
-        {/* 1x1 */}
-        <Card title="1x1" subtitle={month.label} right={<VerTudo href="/1x1" />}>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* 1x1 — donut de qualificação */}
+        <Card
+          title="1x1"
+          subtitle={`Qualificação de leads · ${month.label}`}
+          right={<VerTudo href="/1x1" />}
+        >
           {onex1R.status === 'fulfilled' ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <KPI label="Investimento" value={brl(onex1R.value.meta.spendTotal)} icon={Wallet} tone="brand" />
-              <KPI label="Donos de agência" value={num(onex1R.value.leads.qualificados)} icon={Users} tone="neutral" />
-              <KPI label="Vendas 1x1" value={num(onex1R.value.sales.totalVendas)} icon={ShoppingCart} tone="good" />
-              <KPI label="ROAS" value={`${onex1R.value.sales.roas.toFixed(2)}x`} icon={TrendingUp} tone="blue" />
-            </div>
+            <QualificationDonut stats={onex1R.value.leads} />
           ) : (
             <Indisponivel />
           )}
         </Card>
 
-        {/* Workshop */}
-        <Card title="Workshop" right={<VerTudo href="/workshop" />}>
-          {workshopR.status === 'fulfilled' ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <KPI label="Ingressos" value={num(workshopR.value.kiwify.ingressos)} icon={Ticket} tone="good" />
-              <KPI label="Faturamento" value={brl(workshopR.value.kiwify.faturamentoTotal)} icon={HandCoins} tone="brand" />
-              <KPI label="Investimento" value={brl(workshopR.value.meta.summary.spend)} icon={Wallet} tone="neutral" />
-              <KPI label="Custo / ingresso" value={brl(workshopR.value.cpa)} icon={Target} tone="warn" />
+        {/* Workshop — ingressos x investimento por dia */}
+        <Card
+          title="Workshop"
+          subtitle="Ingressos e investimento por dia"
+          right={<VerTudo href="/workshop" />}
+        >
+          {workshopR.status === 'fulfilled' && workshopChart.length > 0 ? (
+            <div className="pt-2">
+              <SalesChart data={workshopChart} />
             </div>
           ) : (
             <Indisponivel />
           )}
         </Card>
+      </div>
 
-        {/* Social Selling */}
-        <Card title="Social Selling" subtitle="Instagram · 30 dias" right={<VerTudo href="/social-selling" />}>
+      {/* Social Selling — perfil (insights limitadas hoje) */}
+      <div className="mt-6">
+        <Card
+          title="Social Selling"
+          subtitle="Instagram · @emarcosmachado"
+          right={<VerTudo href="/social-selling" />}
+        >
           {socialR.status === 'fulfilled' ? (
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-              <KPI label="Seguidores" value={num(socialR.value.profile.followerCount)} icon={Users} tone="brand" />
-              <KPI label="Publicações" value={num(socialR.value.profile.mediaCount)} icon={AtSign} tone="neutral" />
-              <KPI
-                label="Alcance"
-                value={socialR.value.reach == null ? '—' : num(socialR.value.reach)}
-                icon={Eye}
-                tone="blue"
-              />
-              <KPI
-                label="Contas engajadas"
-                value={socialR.value.accountsEngaged == null ? '—' : num(socialR.value.accountsEngaged)}
-                icon={Heart}
-                tone="good"
-              />
+            <div className="flex flex-wrap items-center gap-8 py-4">
+              {socialR.value.profile.profilePictureUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={socialR.value.profile.profilePictureUrl}
+                  alt={socialR.value.profile.username}
+                  className="h-24 w-24 rounded-full border border-zinc-200 object-cover"
+                />
+              ) : (
+                <span className="grid h-24 w-24 place-items-center rounded-full bg-tiffany-500/10 text-tiffany-600">
+                  <Users className="h-10 w-10" />
+                </span>
+              )}
+              <div className="flex flex-wrap gap-10">
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-zinc-500">Seguidores</p>
+                  <p className="mt-1 text-4xl font-semibold tabular-nums text-zinc-900">
+                    {num(socialR.value.profile.followerCount)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-wider text-zinc-500">Publicações</p>
+                  <p className="mt-1 text-4xl font-semibold tabular-nums text-zinc-900">
+                    {num(socialR.value.profile.mediaCount)}
+                  </p>
+                </div>
+              </div>
             </div>
           ) : (
             <Indisponivel />
