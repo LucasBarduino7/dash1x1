@@ -9,8 +9,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { brl, num } from '@/lib/format';
-import type { BreakdownRow } from '@/lib/types';
+import { brl, num } from '@/lib/shared/format';
+import type { BreakdownRow } from '@/lib/onex1/types';
 
 export function RegionChart({ data }: { data: BreakdownRow[] }) {
   const chartData = data.map((d) => ({

@@ -10,23 +10,16 @@ import {
   YAxis,
   Cell,
 } from 'recharts';
-import { num } from '@/lib/format';
+import { brl, num } from '@/lib/shared/format';
+import type { BreakdownRow } from '@/lib/onex1/types';
 
-const ORDER = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+', 'Unknown'];
+const COLORS = ['#0abab5', '#43c4bd', '#81d8d0', '#099a96', '#0c7b78', '#5b21b6', '#0f6260'];
 
-const COLORS = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5', '#fbbf24', '#fcd34d'];
-
-export function AgeQualifChart({ data }: { data: { key: string; qualif: number }[] }) {
-  // Reordenar pela faixa etária convencional
-  const sorted = [...data].sort((a, b) => {
-    const ia = ORDER.indexOf(a.key);
-    const ib = ORDER.indexOf(b.key);
-    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-  });
-
-  const chartData = sorted.map((d, i) => ({
+export function AgeChart({ data }: { data: BreakdownRow[] }) {
+  const chartData = data.map((d, i) => ({
     age: d.key,
-    qualif: Math.round(d.qualif),
+    leads: d.leads,
+    spend: d.spend,
     color: COLORS[i % COLORS.length],
   }));
 
@@ -44,9 +37,13 @@ export function AgeQualifChart({ data }: { data: { key: string; qualif: number }
             fontSize: 12,
           }}
           labelStyle={{ color: '#f4f4f5' }}
-          formatter={(value) => [num(Number(value)), 'Donos de agência (est.)']}
+          formatter={(value, name) => {
+            const v = Number(value);
+            if (name === 'Investimento') return [brl(v), String(name)];
+            return [num(v), String(name)];
+          }}
         />
-        <Bar dataKey="qualif" name="Donos de agência" radius={[6, 6, 0, 0]}>
+        <Bar dataKey="leads" name="Leads" radius={[6, 6, 0, 0]}>
           {chartData.map((d, i) => (
             <Cell key={i} fill={d.color} />
           ))}

@@ -11,7 +11,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { brl, formatDayMonthBR, num } from '@/lib/format';
+import { brl, formatDayMonthBR, num } from '@/lib/shared/format';
 
 type Props = {
   data: { date: string; spend: number; leads: number }[];
@@ -29,8 +29,8 @@ export function TimelineChart({ data }: Props) {
       <AreaChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="spend" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.5} />
-            <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+            <stop offset="5%" stopColor="#0abab5" stopOpacity={0.5} />
+            <stop offset="95%" stopColor="#0abab5" stopOpacity={0} />
           </linearGradient>
           <linearGradient id="leads" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#10b981" stopOpacity={0.5} />
@@ -75,7 +75,7 @@ export function TimelineChart({ data }: Props) {
           type="monotone"
           dataKey="spend"
           name="Investimento"
-          stroke="#8b5cf6"
+          stroke="#0abab5"
           strokeWidth={2}
           fill="url(#spend)"
         />

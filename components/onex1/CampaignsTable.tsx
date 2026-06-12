@@ -1,6 +1,6 @@
-import { cn } from '@/lib/cn';
-import { brl, num, pct } from '@/lib/format';
-import type { CampaignRow } from '@/lib/types';
+import { cn } from '@/lib/shared/cn';
+import { brl, num, pct } from '@/lib/shared/format';
+import type { CampaignRow } from '@/lib/onex1/types';
 
 // Limpa o nome da campanha pra ficar mais legível (mostra só os tags relevantes)
 function shortName(name: string): string {
@@ -25,13 +25,13 @@ const TONE: Record<string, string> = {
   good: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
   warn: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
   bad: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
-  neutral: 'bg-zinc-500/10 text-zinc-400 ring-zinc-700/40',
+  neutral: 'bg-zinc-500/10 text-zinc-500 ring-zinc-300',
 };
 
 export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
+      <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-center text-sm text-zinc-500">
         Nenhuma campanha no período.
       </div>
     );
@@ -41,7 +41,7 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wider text-zinc-500">
+          <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-500">
             <th className="px-3 py-2 font-medium">Campanha</th>
             <th className="px-3 py-2 text-right font-medium">Investimento</th>
             <th className="px-3 py-2 text-right font-medium">CPM</th>
@@ -61,22 +61,22 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
             return (
               <tr
                 key={c.id}
-                className="border-b border-zinc-900 transition-colors hover:bg-zinc-900/50"
+                className="border-b border-zinc-200 transition-colors hover:bg-zinc-100"
               >
                 <td className="max-w-[280px] px-3 py-3">
-                  <div className="truncate font-medium text-zinc-100" title={c.name}>
+                  <div className="truncate font-medium text-zinc-900" title={c.name}>
                     {shortName(c.name)}
                   </div>
                   <div className="mt-0.5 text-[10px] uppercase tracking-wider text-zinc-500">
                     ID {c.id}
                   </div>
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-100">{brl(c.spend)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-300">{brl(c.cpm)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-300">{brl(c.cpc)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-300">{pct(c.ctr)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-300">{num(c.linkClicks)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-300">
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-900">{brl(c.spend)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(c.cpm)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(c.cpc)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{pct(c.ctr)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{num(c.linkClicks)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-700">
                   {num(c.landingPageViews)}
                 </td>
                 <td
@@ -91,8 +91,8 @@ export function CampaignsTable({ rows }: { rows: CampaignRow[] }) {
                 >
                   {pct(c.connectRate)}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-100">{num(c.leads)}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-100">
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-900">{num(c.leads)}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-900">
                   {c.leads > 0 ? brl(c.cpl) : '—'}
                 </td>
                 <td className="px-3 py-3 text-center">

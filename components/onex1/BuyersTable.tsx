@@ -1,12 +1,12 @@
-import { cn } from '@/lib/cn';
-import { brl, formatDateBR } from '@/lib/format';
-import type { BuyerMatch } from '@/lib/types';
+import { cn } from '@/lib/shared/cn';
+import { brl, formatDateBR } from '@/lib/shared/format';
+import type { BuyerMatch } from '@/lib/onex1/types';
 
 const MATCH_LABEL: Record<BuyerMatch['matchType'], { label: string; tone: string }> = {
   phone: { label: '📱 telefone', tone: 'text-emerald-300' },
   email: { label: '✉️ email', tone: 'text-emerald-300' },
   name: { label: '🔍 nome (fuzzy)', tone: 'text-amber-300' },
-  override: { label: '🎯 manual', tone: 'text-violet-300' },
+  override: { label: '🎯 manual', tone: 'text-tiffany-600' },
   none: { label: '— sem match', tone: 'text-rose-300/70' },
 };
 
@@ -21,7 +21,7 @@ const STATUS_LABEL: Record<string, string> = {
 export function BuyersTable({ buyers }: { buyers: BuyerMatch[] }) {
   if (buyers.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
+      <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-center text-sm text-zinc-500">
         Nenhum comprador cadastrado.
       </div>
     );
@@ -31,7 +31,7 @@ export function BuyersTable({ buyers }: { buyers: BuyerMatch[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wider text-zinc-500">
+          <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-500">
             <th className="px-3 py-2 font-medium">#</th>
             <th className="px-3 py-2 font-medium">Data</th>
             <th className="px-3 py-2 font-medium">Comprador</th>
@@ -50,21 +50,21 @@ export function BuyersTable({ buyers }: { buyers: BuyerMatch[] }) {
               <tr
                 key={b.buyerId}
                 className={cn(
-                  'border-b border-zinc-900 transition-colors hover:bg-zinc-900/50',
+                  'border-b border-zinc-200 transition-colors hover:bg-zinc-100',
                   !b.is1x1 && 'opacity-50',
                 )}
               >
                 <td className="px-3 py-3 text-zinc-500 tabular-nums">{b.buyerId}</td>
-                <td className="px-3 py-3 text-zinc-300 tabular-nums">{formatDateBR(b.date)}</td>
+                <td className="px-3 py-3 text-zinc-700 tabular-nums">{formatDateBR(b.date)}</td>
                 <td className="px-3 py-3">
-                  <div className="font-medium text-zinc-100">{b.apelido}</div>
+                  <div className="font-medium text-zinc-900">{b.apelido}</div>
                   <div className="mt-0.5 truncate text-[11px] text-zinc-500" title={b.nome}>
                     {b.nome}
                   </div>
                 </td>
-                <td className="px-3 py-3 text-xs text-zinc-300">{b.plano}</td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-300">{brl(b.total)}</td>
-                <td className="px-3 py-3 text-right tabular-nums font-medium text-zinc-100">
+                <td className="px-3 py-3 text-xs text-zinc-700">{b.plano}</td>
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(b.total)}</td>
+                <td className="px-3 py-3 text-right tabular-nums font-medium text-zinc-900">
                   {brl(b.recebidoMaio)}
                 </td>
                 <td className={cn('px-3 py-3 text-center text-xs', matchInfo.tone)}>
@@ -79,7 +79,7 @@ export function BuyersTable({ buyers }: { buyers: BuyerMatch[] }) {
                       ● sim
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full bg-zinc-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400 ring-1 ring-inset ring-zinc-700/40">
+                    <span className="inline-flex items-center rounded-full bg-zinc-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500 ring-1 ring-inset ring-zinc-300">
                       ● não
                     </span>
                   )}

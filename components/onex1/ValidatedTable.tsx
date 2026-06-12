@@ -1,7 +1,7 @@
 import { BadgeCheck } from 'lucide-react';
-import { cn } from '@/lib/cn';
-import { brl, num, pct } from '@/lib/format';
-import type { ValidatedAdset } from '@/lib/types';
+import { cn } from '@/lib/shared/cn';
+import { brl, num, pct } from '@/lib/shared/format';
+import type { ValidatedAdset } from '@/lib/onex1/types';
 
 function taxaTone(taxa: number): string {
   if (taxa >= 40) return 'text-emerald-300';
@@ -12,7 +12,7 @@ function taxaTone(taxa: number): string {
 export function ValidatedTable({ rows }: { rows: ValidatedAdset[] }) {
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-800 p-8 text-center text-sm text-zinc-500">
+      <div className="rounded-xl border border-dashed border-zinc-200 p-8 text-center text-sm text-zinc-500">
         Nenhum par público + criativo validado ainda no período. Um público entra aqui
         quando passa do investimento mínimo mantendo a taxa de agendamento mínima — e
         cada criativo só conta se também bater essa taxa.
@@ -32,7 +32,7 @@ export function ValidatedTable({ rows }: { rows: ValidatedAdset[] }) {
             <div className="flex min-w-0 flex-1 items-center gap-2.5">
               <BadgeCheck className="h-5 w-5 shrink-0 text-emerald-400" />
               <div className="min-w-0">
-                <div className="truncate font-medium text-zinc-100" title={r.name}>
+                <div className="truncate font-medium text-zinc-900" title={r.name}>
                   {r.name}
                 </div>
                 {r.id && (
@@ -75,9 +75,9 @@ export function ValidatedTable({ rows }: { rows: ValidatedAdset[] }) {
                 </thead>
                 <tbody>
                   {r.criativos.map((c, i) => (
-                    <tr key={c.id || c.name + i} className="border-t border-zinc-900">
+                    <tr key={c.id || c.name + i} className="border-t border-zinc-200">
                       <td className="max-w-[360px] py-2 pr-3">
-                        <div className="truncate text-zinc-200" title={c.name}>
+                        <div className="truncate text-zinc-800" title={c.name}>
                           {c.name}
                         </div>
                         {c.id && c.id !== c.name && (
@@ -86,7 +86,7 @@ export function ValidatedTable({ rows }: { rows: ValidatedAdset[] }) {
                           </div>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-right tabular-nums text-zinc-300">
+                      <td className="px-3 py-2 text-right tabular-nums text-zinc-700">
                         {num(c.leadsTotal)}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-emerald-300">
@@ -115,7 +115,7 @@ export function ValidatedTable({ rows }: { rows: ValidatedAdset[] }) {
 function Metric({
   label,
   value,
-  tone = 'text-zinc-100',
+  tone = 'text-zinc-900',
 }: {
   label: string;
   value: string;

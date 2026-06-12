@@ -24,15 +24,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
   return (
     <main className="flex min-h-screen items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-8 backdrop-blur">
+        <div className="rounded-2xl border border-zinc-200 bg-white p-8 backdrop-blur">
           <div className="text-center">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-tiffany-600">
               Grupo Scale · Marcos Machado
             </p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-50">
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-zinc-900">
               Dashboard 1x1
             </h1>
-            <p className="mt-3 text-sm text-zinc-400">
+            <p className="mt-3 text-sm text-zinc-500">
               Acesso restrito. Entre com sua conta Google autorizada.
             </p>
           </div>
@@ -52,7 +52,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
           >
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-700/70 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24">
                 <path

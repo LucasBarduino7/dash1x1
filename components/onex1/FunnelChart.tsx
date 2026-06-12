@@ -1,4 +1,4 @@
-import { num, pct } from '@/lib/format';
+import { num, pct } from '@/lib/shared/format';
 
 type Stage = {
   label: string;
@@ -79,20 +79,20 @@ export function FunnelChart({ stages, rowHeight = 90 }: Props) {
             }}
           >
             <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-200/90">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-800">
                 {s.label}
               </p>
               {pctOfPrev !== null && (
-                <p className="mt-0.5 text-[11px] text-zinc-300/70">
+                <p className="mt-0.5 text-[11px] text-zinc-600">
                   {pct(pctOfPrev)} da etapa anterior
                 </p>
               )}
             </div>
             <div className="text-right">
-              <p className="text-2xl font-semibold tabular-nums leading-none text-zinc-50">
+              <p className="text-2xl font-semibold tabular-nums leading-none text-zinc-900">
                 {num(s.value)}
               </p>
-              <p className="mt-1 text-[11px] tabular-nums text-zinc-300/70">
+              <p className="mt-1 text-[11px] tabular-nums text-zinc-600">
                 {pct(pctOfTop)} do topo
               </p>
             </div>

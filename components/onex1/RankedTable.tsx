@@ -1,6 +1,6 @@
-import { cn } from '@/lib/cn';
-import { brl, num, pct } from '@/lib/format';
-import type { RankedRow } from '@/lib/types';
+import { cn } from '@/lib/shared/cn';
+import { brl, num, pct } from '@/lib/shared/format';
+import type { RankedRow } from '@/lib/onex1/types';
 
 // Semáforo baseado em: taxa de qualificação + volume de qualificados + CPL qualificado
 function getSemaphore(
@@ -19,7 +19,7 @@ const TONE: Record<string, string> = {
   good: 'bg-emerald-500/15 text-emerald-300 ring-emerald-500/30',
   warn: 'bg-amber-500/15 text-amber-300 ring-amber-500/30',
   bad: 'bg-rose-500/15 text-rose-300 ring-rose-500/30',
-  neutral: 'bg-zinc-500/10 text-zinc-400 ring-zinc-700/40',
+  neutral: 'bg-zinc-500/10 text-zinc-500 ring-zinc-300',
 };
 
 export function RankedTable({
@@ -35,7 +35,7 @@ export function RankedTable({
 
   if (displayed.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-zinc-800 p-6 text-center text-sm text-zinc-500">
+      <div className="rounded-xl border border-dashed border-zinc-200 p-6 text-center text-sm text-zinc-500">
         Nenhum {entityLabel.toLowerCase()} encontrado no período.
       </div>
     );
@@ -45,7 +45,7 @@ export function RankedTable({
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-zinc-800 text-left text-xs uppercase tracking-wider text-zinc-500">
+          <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-500">
             <th className="px-3 py-2 font-medium">{entityLabel}</th>
             <th className="px-3 py-2 text-right font-medium">Invest.</th>
             <th className="px-3 py-2 text-right font-medium">Leads</th>
@@ -74,15 +74,15 @@ export function RankedTable({
             return (
               <tr
                 key={r.name + idx}
-                className="border-b border-zinc-900 transition-colors hover:bg-zinc-900/50"
+                className="border-b border-zinc-200 transition-colors hover:bg-zinc-100"
               >
                 <td className="max-w-[340px] px-3 py-3">
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-medium tabular-nums text-zinc-400 ring-1 ring-zinc-800">
+                    <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded text-[10px] font-medium tabular-nums text-zinc-500 ring-1 ring-zinc-200">
                       {idx + 1}
                     </span>
                     <div className="min-w-0">
-                      <div className="truncate font-medium text-zinc-100" title={r.name}>
+                      <div className="truncate font-medium text-zinc-900" title={r.name}>
                         {r.name}
                       </div>
                       {r.id && (
@@ -93,10 +93,10 @@ export function RankedTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-100">
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-900">
                   {brl(r.spend)}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-300">
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-700">
                   {num(r.leadsTotal)}
                 </td>
                 <td className="px-3 py-3 text-right tabular-nums text-amber-200">
@@ -105,7 +105,7 @@ export function RankedTable({
                 <td className="px-3 py-3 text-right tabular-nums text-emerald-300">
                   {num(r.agendados)}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-violet-300">
+                <td className="px-3 py-3 text-right tabular-nums text-tiffany-600">
                   {num(r.donoSemFaturamento)}
                 </td>
                 <td className="px-3 py-3 text-right tabular-nums text-rose-300/80">
@@ -123,10 +123,10 @@ export function RankedTable({
                 >
                   {pct(r.taxaQualificacao)}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-100">
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-900">
                   {r.qualificados > 0 ? brl(r.cplQualificado) : '—'}
                 </td>
-                <td className="px-3 py-3 text-right tabular-nums text-zinc-100">
+                <td className="px-3 py-3 text-right tabular-nums text-zinc-900">
                   {r.agendados > 0 ? brl(r.custoPorReuniao) : '—'}
                 </td>
                 <td className="px-3 py-3 text-center">

@@ -1,19 +1,31 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-bg: #08080b;
-  --color-surface: #111114;
-  --color-surface-2: #18181c;
-  --color-border: #26262d;
-  --color-text: #f4f4f5;
-  --color-muted: #a1a1aa;
+  --color-bg: #f6f8f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #f1f6f5;
+  --color-border: #e3eceb;
+  --color-text: #0f1716;
+  --color-muted: #5b6b69;
 
-  --color-brand: #8b5cf6; /* violet-500 */
-  --color-brand-dim: #4c1d95;
-  --color-good: #10b981; /* emerald-500 */
-  --color-warn: #f59e0b; /* amber-500 */
-  --color-bad: #ef4444; /* red-500 */
-  --color-blue: #3b82f6;
+  --color-brand: #0abab5; /* tiffany */
+  --color-brand-dim: #81d8d0; /* tiffany claro */
+  --color-good: #059669; /* emerald-600 */
+  --color-warn: #d97706; /* amber-600 */
+  --color-bad: #e11d48; /* rose-600 */
+  --color-blue: #0284c7; /* sky-600 */
+
+  /* paleta tiffany utilitária (bg-tiffany-500, text-tiffany-700, etc.) */
+  --color-tiffany-50: #ecfbfa;
+  --color-tiffany-100: #d2f4f2;
+  --color-tiffany-200: #a8e9e5;
+  --color-tiffany-300: #81d8d0;
+  --color-tiffany-400: #43c4bd;
+  --color-tiffany-500: #0abab5;
+  --color-tiffany-600: #099a96;
+  --color-tiffany-700: #0c7b78;
+  --color-tiffany-800: #0f6260;
+  --color-tiffany-900: #115150;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -39,11 +51,11 @@ html, body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2a2a31;
+  background: #cdd9d8;
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3a3a44;
+  background: #b4c4c2;
 }
 
 /* Recharts: força cores dos textos */

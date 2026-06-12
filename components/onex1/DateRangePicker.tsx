@@ -41,7 +41,7 @@ export function DateRangePicker({ since, until, minDate, maxDate }: Props) {
   }
 
   return (
-    <div className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/60 px-2 py-1 text-xs text-zinc-300">
+    <div className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-xs text-zinc-700">
       <Calendar className="h-3.5 w-3.5 text-emerald-400" />
       <input
         type="date"
@@ -51,7 +51,7 @@ export function DateRangePicker({ since, until, minDate, maxDate }: Props) {
         onChange={(e) => update({ since: e.target.value })}
         disabled={pending}
         style={{ colorScheme: 'dark' }}
-        className="bg-transparent text-zinc-100 outline-none"
+        className="bg-transparent text-zinc-900 outline-none"
       />
       <span className="text-zinc-600">→</span>
       <input
@@ -62,14 +62,14 @@ export function DateRangePicker({ since, until, minDate, maxDate }: Props) {
         onChange={(e) => update({ until: e.target.value })}
         disabled={pending}
         style={{ colorScheme: 'dark' }}
-        className="bg-transparent text-zinc-100 outline-none"
+        className="bg-transparent text-zinc-900 outline-none"
       />
-      <span className="mx-1 h-4 w-px bg-zinc-700" />
+      <span className="mx-1 h-4 w-px bg-zinc-200" />
       <button
         type="button"
         onClick={setToday}
         disabled={pending}
-        className="rounded px-2 py-0.5 text-[11px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+        className="rounded px-2 py-0.5 text-[11px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
       >
         Hoje
       </button>
@@ -77,7 +77,7 @@ export function DateRangePicker({ since, until, minDate, maxDate }: Props) {
         type="button"
         onClick={setFullMonth}
         disabled={pending}
-        className="rounded px-2 py-0.5 text-[11px] text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+        className="rounded px-2 py-0.5 text-[11px] text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900"
       >
         Mês
       </button>

@@ -10,16 +10,23 @@ import {
   YAxis,
   Cell,
 } from 'recharts';
-import { brl, num } from '@/lib/format';
-import type { BreakdownRow } from '@/lib/types';
+import { num } from '@/lib/shared/format';
 
-const COLORS = ['#8b5cf6', '#a78bfa', '#c4b5fd', '#7c3aed', '#6d28d9', '#5b21b6', '#4c1d95'];
+const ORDER = ['13-17', '18-24', '25-34', '35-44', '45-54', '55-64', '65+', 'Unknown'];
 
-export function AgeChart({ data }: { data: BreakdownRow[] }) {
-  const chartData = data.map((d, i) => ({
+const COLORS = ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5', '#fbbf24', '#fcd34d'];
+
+export function AgeQualifChart({ data }: { data: { key: string; qualif: number }[] }) {
+  // Reordenar pela faixa etária convencional
+  const sorted = [...data].sort((a, b) => {
+    const ia = ORDER.indexOf(a.key);
+    const ib = ORDER.indexOf(b.key);
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  });
+
+  const chartData = sorted.map((d, i) => ({
     age: d.key,
-    leads: d.leads,
-    spend: d.spend,
+    qualif: Math.round(d.qualif),
     color: COLORS[i % COLORS.length],
   }));
 
@@ -37,13 +44,9 @@ export function AgeChart({ data }: { data: BreakdownRow[] }) {
             fontSize: 12,
           }}
           labelStyle={{ color: '#f4f4f5' }}
-          formatter={(value, name) => {
-            const v = Number(value);
-            if (name === 'Investimento') return [brl(v), String(name)];
-            return [num(v), String(name)];
-          }}
+          formatter={(value) => [num(Number(value)), 'Donos de agência (est.)']}
         />
-        <Bar dataKey="leads" name="Leads" radius={[6, 6, 0, 0]}>
+        <Bar dataKey="qualif" name="Donos de agência" radius={[6, 6, 0, 0]}>
           {chartData.map((d, i) => (
             <Cell key={i} fill={d.color} />
           ))}

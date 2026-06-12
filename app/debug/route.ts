@@ -1,5 +1,5 @@
-import { fetchDashboardData } from '@/lib/dashboard';
-import { getMonth } from '@/lib/months';
+import { fetchDashboardData } from '@/lib/onex1/dashboard';
+import { getMonth } from '@/lib/onex1/months';
 
 export const dynamic = 'force-dynamic';
 

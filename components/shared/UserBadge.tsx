@@ -15,7 +15,7 @@ export async function UserBadge() {
     >
       <button
         type="submit"
-        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900/60 px-3 py-1.5 text-xs text-zinc-300 transition-colors hover:bg-zinc-800 hover:text-zinc-100"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
         title={`Sair (${email})`}
       >
         <LogOut className="h-3.5 w-3.5" />

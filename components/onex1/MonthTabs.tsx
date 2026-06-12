@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
 import { CalendarRange } from 'lucide-react';
-import { cn } from '@/lib/cn';
+import { cn } from '@/lib/shared/cn';
 
 type MonthOption = { key: string; label: string };
 
@@ -31,9 +31,9 @@ export function MonthTabs({
   return (
     <nav
       aria-label="Mês"
-      className="inline-flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-900/60 p-1"
+      className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1"
     >
-      <CalendarRange className="ml-1.5 mr-0.5 h-3.5 w-3.5 shrink-0 text-violet-400" />
+      <CalendarRange className="ml-1.5 mr-0.5 h-3.5 w-3.5 shrink-0 text-tiffany-600" />
       {months.map((m) => {
         const isActive = m.key === active;
         return (
@@ -46,8 +46,8 @@ export function MonthTabs({
             className={cn(
               'rounded-lg px-3 py-1.5 text-xs font-semibold tracking-wide transition-all',
               isActive
-                ? 'bg-violet-500/20 text-violet-100 ring-1 ring-inset ring-violet-500/40'
-                : 'text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100',
+                ? 'bg-tiffany-500/20 text-tiffany-800 ring-1 ring-inset ring-tiffany-500/40'
+                : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900',
               pending && 'opacity-60',
             )}
           >
