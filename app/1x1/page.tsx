@@ -1,11 +1,10 @@
 import {
   AlertTriangle,
-  BadgeCheck,
+  BarChart3,
   CalendarCheck,
   Eye,
   Gauge,
   HandCoins,
-  Layers,
   Percent,
   ReceiptText,
   ShoppingBag,
@@ -13,25 +12,17 @@ import {
   UserCheck,
   Users,
   Wallet,
-  Zap,
 } from 'lucide-react';
 import { fetchDashboardData } from '@/lib/onex1/dashboard';
 import { MONTHS, getMonth } from '@/lib/onex1/months';
 import { brl, num, pct } from '@/lib/shared/format';
 import { BuyersTable } from '@/components/onex1/BuyersTable';
 import { Card } from '@/components/onex1/Card';
-import { CampaignsTable } from '@/components/onex1/CampaignsTable';
-import { FunnelChart } from '@/components/onex1/FunnelChart';
 import { Header } from '@/components/onex1/Header';
 import { KPI } from '@/components/onex1/KPI';
-import { RankedTable } from '@/components/onex1/RankedTable';
-import { ValidatedTable } from '@/components/onex1/ValidatedTable';
+import { LeadScoreTable, notaComprador } from '@/components/onex1/LeadScoreTable';
 import { Sidebar } from '@/components/onex1/Sidebar';
 import { TABS, type TabKey } from '@/lib/onex1/tabs';
-import { AgeChart } from '@/components/onex1/charts/AgeChart';
-import { AgeQualifChart } from '@/components/onex1/charts/AgeQualifChart';
-import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut';
-import { TimelineChart } from '@/components/onex1/charts/TimelineChart';
 import type { DashboardData } from '@/lib/onex1/types';
 
 export const dynamic = 'force-dynamic';
@@ -119,10 +110,8 @@ export default async function Page({
         <Sidebar active={tab} />
         <div className="min-w-0 flex-1">
           {tab === 'principais' && <SectionPrincipais data={data} />}
-          {tab === 'funis' && <SectionFunis data={data} />}
           {tab === 'secundarias' && <SectionSecundarias data={data} />}
-          {tab === 'campanhas' && <SectionCampanhas data={data} />}
-          {tab === 'validados' && <SectionValidados data={data} />}
+          {tab === 'leadscore' && <SectionLeadScore data={data} />}
         </div>
       </div>
 
@@ -133,88 +122,62 @@ export default async function Page({
   );
 }
 
-// ---------- Seções ----------
+// ---------- Métricas Principais ----------
 
 function SectionPrincipais({ data }: { data: DashboardData }) {
-  const taxaComparecimento =
-    data.leads.agendados > 0
-      ? (data.sales.reunioesRealizadas / data.leads.agendados) * 100
-      : 0;
+  const leads = data.meta.leadsMeta;
+  const agendamentos = data.leads.agendados;
+  const realizadas = data.sales.reunioesRealizadas;
+  const vendas = data.sales.totalVendas;
+
+  // Todas as taxas calculadas sobre o total de Leads (pixel do Meta).
+  const taxaSobreLeads = (n: number) => (leads > 0 ? (n / leads) * 100 : 0);
+  const taxaAgendamentos = taxaSobreLeads(agendamentos);
+  const taxaRealizadas = taxaSobreLeads(realizadas);
+  const taxaConversao = taxaSobreLeads(vendas);
+
   return (
     <div className="space-y-6">
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <KPI
-          label="Donos de agência"
-          value={num(data.leads.qualificados)}
-          hint={`${pct(data.leads.taxaQualificacao)} dos ${num(data.leads.total)} leads`}
-          tone="warn"
-          icon={UserCheck}
-          size="lg"
-        />
-        <KPI
-          label="Reuniões realizadas"
-          value={num(data.sales.reunioesRealizadas)}
-          hint={`${num(data.leads.agendados)} agendadas no mês`}
-          tone="good"
-          icon={CalendarCheck}
-          size="lg"
-        />
-        <KPI
-          label="Custo por dono de agência"
-          value={brl(data.qualif.custoPorLeadQualificado)}
-          hint={`${brl(data.meta.spendTotal)} ÷ ${num(data.leads.qualificados)}`}
-          tone="brand"
-          icon={Target}
-          size="lg"
-        />
-        <KPI
-          label="Custo por call realizada"
-          value={brl(data.sales.custoPorRealizada)}
-          hint={`${brl(data.meta.spendTotal)} ÷ ${num(data.sales.reunioesRealizadas)} realizadas`}
-          tone="brand"
-          icon={Zap}
-          size="lg"
-        />
-      </section>
-
-      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-        <KPI label="Investimento" value={brl(data.meta.spendTotal)} icon={Wallet} tone="brand" />
-        <KPI
-          label="Connect rate"
-          value={pct(data.meta.connectRate)}
-          hint="LP views / cliques"
-          icon={Eye}
-          tone={
-            data.meta.connectRate >= 70 ? 'good' : data.meta.connectRate >= 50 ? 'warn' : 'bad'
-          }
-        />
-        <KPI
-          label="Taxa de comparecimento"
-          value={pct(taxaComparecimento)}
-          hint={`${num(data.sales.reunioesRealizadas)} realizadas / ${num(data.leads.agendados)} agendadas`}
-          icon={CalendarCheck}
-          tone={
-            taxaComparecimento >= 70 ? 'good' : taxaComparecimento >= 50 ? 'warn' : 'bad'
-          }
-        />
-        <KPI
-          label="Taxa de conversão"
-          value={pct(data.sales.taxaConversao)}
-          hint={`${num(data.sales.totalVendas)} vendas / ${num(data.sales.reunioesRealizadas)} realizadas`}
-          icon={Percent}
-          tone={data.sales.taxaConversao >= 40 ? 'good' : data.sales.taxaConversao >= 20 ? 'warn' : 'bad'}
-        />
-        <KPI
-          label="Leads (Meta)"
-          value={num(data.meta.leadsMeta)}
-          hint="Vol. registrado pelo pixel"
+          label="Leads"
+          value={num(leads)}
+          hint="Volume registrado pelo pixel (Meta)"
           icon={Users}
+          tone="brand"
+          size="lg"
         />
         <KPI
-          label="CPL (Meta)"
+          label="CPL"
           value={brl(data.meta.cplMeta)}
           hint="Custo por lead bruto"
           icon={Target}
+          tone="brand"
+          size="lg"
+        />
+        <KPI
+          label="Agendamentos"
+          value={num(agendamentos)}
+          hint={`${pct(taxaAgendamentos)} dos leads`}
+          icon={CalendarCheck}
+          tone="brand"
+          size="lg"
+        />
+        <KPI
+          label="Realizadas"
+          value={num(realizadas)}
+          hint={`${pct(taxaRealizadas)} dos leads`}
+          icon={CalendarCheck}
+          tone="brand"
+          size="lg"
+        />
+        <KPI
+          label="Vendas"
+          value={num(vendas)}
+          hint={`${pct(taxaConversao)} de conversão`}
+          icon={ShoppingBag}
+          tone="brand"
+          size="lg"
         />
       </section>
 
@@ -229,35 +192,20 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
             </span>
           }
         >
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
-            <KPI
-              label="Vendas 1x1"
-              value={num(data.sales.totalVendas)}
-              hint={`de ${data.sales.buyers.length} compradores no mês`}
-              icon={ShoppingBag}
-              tone="good"
-              size="lg"
-            />
-            <KPI
-              label="Taxa de conversão"
-              value={pct(data.sales.taxaConversao)}
-              hint={`${num(data.sales.totalVendas)} vendas ÷ ${num(data.sales.reunioesRealizadas)} calls realizadas`}
-              icon={Percent}
-              tone={data.sales.taxaConversao >= 40 ? 'good' : data.sales.taxaConversao >= 20 ? 'warn' : 'bad'}
-              size="lg"
-            />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
             <KPI
               label="Faturamento"
               value={brl(data.sales.faturamento1x1)}
               hint="entrada + parcelas no mês"
               icon={HandCoins}
-              tone="good"
+              tone="brand"
               size="lg"
             />
             <KPI
-              label="Ticket médio"
-              value={brl(data.sales.ticketMedio)}
-              icon={ReceiptText}
+              label="Investimento"
+              value={brl(data.meta.spendTotal)}
+              hint="Total gasto no mês (Meta)"
+              icon={Wallet}
               tone="brand"
               size="lg"
             />
@@ -270,11 +218,19 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
               size="lg"
             />
             <KPI
+              label="Taxa de conversão"
+              value={pct(taxaConversao)}
+              hint={`${num(vendas)} vendas ÷ ${num(leads)} leads`}
+              icon={Percent}
+              tone="brand"
+              size="lg"
+            />
+            <KPI
               label="ROAS"
               value={`${data.sales.roas.toFixed(2).replace('.', ',')}×`}
               hint={`R$ ${data.sales.roas.toFixed(2).replace('.', ',')} retorno por R$ 1 investido`}
               icon={Gauge}
-              tone={data.sales.roas >= 2 ? 'good' : data.sales.roas >= 1 ? 'warn' : 'bad'}
+              tone="brand"
               size="lg"
             />
           </div>
@@ -289,134 +245,106 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
   );
 }
 
-function SectionFunis({ data }: { data: DashboardData }) {
+// ---------- Métricas Secundárias ----------
+
+function SectionSecundarias({ data }: { data: DashboardData }) {
   return (
-    <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <Card title="Funil geral" subtitle="Todos os leads do mês até a venda fechada">
-        <FunnelChart
-          stages={[
-            { label: 'Leads totais', value: data.leads.total, fill: '#71717a' },
-            { label: 'Agendamentos', value: data.leads.agendados, fill: '#0abab5' },
-            { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
-            { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
-          ]}
-        />
-      </Card>
-      <Card
-        title="Funil de qualificados"
-        subtitle="Apenas donos de agência — desconsidera o filtro de qualificação"
-      >
-        <FunnelChart
-          stages={[
-            { label: 'Donos de agência', value: data.leads.qualificados, fill: '#f59e0b' },
-            { label: 'Agendamentos', value: data.leads.agendados, fill: '#0abab5' },
-            { label: 'Comparecimentos', value: data.sales.reunioesRealizadas, fill: '#0ea5e9' },
-            { label: 'Vendas 1x1', value: data.sales.totalVendas, fill: '#10b981' },
-          ]}
-        />
-      </Card>
+    <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+      <KPI
+        label="CPM"
+        value={brl(data.meta.cpm)}
+        hint="Custo por mil impressões"
+        icon={Wallet}
+        tone="brand"
+        size="lg"
+      />
+      <KPI
+        label="Connect rate"
+        value="—"
+        hint="Página de conversão (sem uso)"
+        icon={Eye}
+        tone="brand"
+        size="lg"
+      />
+      <KPI
+        label="CTR"
+        value={pct(data.meta.ctr)}
+        hint="Cliques / impressões"
+        icon={BarChart3}
+        tone="brand"
+        size="lg"
+      />
+      <KPI
+        label="Ticket médio"
+        value={brl(data.sales.ticketMedio)}
+        hint="Faturamento ÷ vendas"
+        icon={ReceiptText}
+        tone="brand"
+        size="lg"
+      />
+      <KPI
+        label="Custo por reunião realizada"
+        value={brl(data.sales.custoPorRealizada)}
+        hint={`${brl(data.meta.spendTotal)} ÷ ${num(data.sales.reunioesRealizadas)} realizadas`}
+        icon={CalendarCheck}
+        tone="brand"
+        size="lg"
+      />
+      <KPI
+        label="Custo por dono de agência"
+        value={brl(data.qualif.custoPorLeadQualificado)}
+        hint={`${brl(data.meta.spendTotal)} ÷ ${num(data.leads.qualificados)}`}
+        icon={Target}
+        tone="brand"
+        size="lg"
+      />
+      <KPI
+        label="Donos de agência"
+        value={num(data.leads.qualificados)}
+        hint={`${pct(data.leads.taxaQualificacao)} dos ${num(data.leads.total)} leads`}
+        icon={UserCheck}
+        tone="brand"
+        size="lg"
+      />
     </section>
   );
 }
 
-function SectionSecundarias({ data }: { data: DashboardData }) {
+// ---------- Lead Score ----------
+
+function SectionLeadScore({ data }: { data: DashboardData }) {
+  const compradores = data.sales.buyers.filter((b) => b.is1x1);
+  const notas = compradores
+    .map((b) => notaComprador(b).nota)
+    .filter((n): n is number => n != null);
+  const notaMedia = notas.length > 0 ? notas.reduce((a, b) => a + b, 0) / notas.length : 0;
+
   return (
-    <div className="space-y-4">
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card
-          className="lg:col-span-2"
-          title="Investimento e leads por dia"
-          subtitle="Volume diário ao longo do período"
-        >
-          <TimelineChart data={data.dailyTimeline} />
-        </Card>
-        <Card title="Qualificação dos leads" subtitle="Status real (cor da planilha)">
-          <QualificationDonut stats={data.leads} />
-        </Card>
+    <div className="space-y-6">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <KPI
+          label="Compradores 1x1"
+          value={num(compradores.length)}
+          hint={`${num(notas.length)} com nota calculada`}
+          icon={ShoppingBag}
+          tone="brand"
+          size="lg"
+        />
+        <KPI
+          label="Nota média"
+          value={notas.length > 0 ? `${notaMedia.toFixed(1).replace('.', ',')} / 10` : '—'}
+          hint="Média da nota dos compradores"
+          icon={Gauge}
+          tone="brand"
+          size="lg"
+        />
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card title="Leads por idade" subtitle="Volume total de leads (Meta) por faixa etária">
-          {data.ageBreakdown.length > 0 ? (
-            <AgeChart data={data.ageBreakdown} />
-          ) : (
-            <p className="py-12 text-center text-sm text-zinc-500">Sem dados de idade.</p>
-          )}
-        </Card>
-        <Card
-          title="Donos de agência por idade"
-          subtitle="Estimativa: idade ponderada pela taxa de qualificação de cada conjunto"
-        >
-          {data.qualifiedAgeBreakdown.length > 0 ? (
-            <AgeQualifChart data={data.qualifiedAgeBreakdown} />
-          ) : (
-            <p className="py-12 text-center text-sm text-zinc-500">Sem dados pra estimar.</p>
-          )}
-        </Card>
-      </section>
-    </div>
-  );
-}
-
-function SectionCampanhas({ data }: { data: DashboardData }) {
-  return (
-    <div className="space-y-4">
       <Card
-        title="Campanhas no período"
-        subtitle="Métricas brutas do Meta (sem cruzamento com planilha)."
+        title="Lead Score dos compradores"
+        subtitle="Nota de 0 a 10 = pago ÷ valor cheio do produto, ajustado pelo faturamento do cliente. Pagar o produto cheio à vista = 10 (faturamento ≥ 150k = 8). Club com entrada ≥ R$ 20k tem piso de 7."
       >
-        <CampaignsTable rows={data.campaigns} />
-      </Card>
-
-      <Card
-        title="Ranking de Conjuntos"
-        subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por adset_id entre planilha automatizada (origem) e planilha colorida (qualificação)."
-        right={
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-tiffany-500/40 bg-tiffany-500/10 px-2.5 py-1 text-[11px] text-tiffany-700">
-            <Layers className="h-3.5 w-3.5" />
-            {data.adsetsRanked.length} conjuntos
-          </span>
-        }
-      >
-        <RankedTable rows={data.adsetsRanked} entityLabel="Conjunto" limit={40} />
-      </Card>
-
-      <Card
-        title="Ranking de Anúncios"
-        subtitle="Ordenado por nº de donos de agência (amarelo + verde + roxo). Cruzamento por ad_id — só aparece se a planilha de origem trouxer o ID do anúncio."
-        right={
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-tiffany-500/40 bg-tiffany-500/10 px-2.5 py-1 text-[11px] text-tiffany-700">
-            <Layers className="h-3.5 w-3.5" />
-            {data.adsRanked.length} anúncios
-          </span>
-        }
-      >
-        <RankedTable rows={data.adsRanked} entityLabel="Anúncio" limit={40} />
-      </Card>
-    </div>
-  );
-}
-
-function SectionValidados({ data }: { data: DashboardData }) {
-  const { thresholds, adsets } = data.validados;
-  return (
-    <div className="space-y-4">
-      <Card
-        title="Públicos e criativos validados"
-        subtitle={`Um público (conjunto) é validado quando já passou de ${brl(thresholds.minSpend)} de investimento mantendo pelo menos ${pct(thresholds.minTaxaAgendamento)} de agendamentos. Dentro dele, só entram os criativos que também batem ${pct(thresholds.minTaxaAgendamento)} — cada par público + criativo validado.`}
-        right={
-          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-200">
-            <BadgeCheck className="h-3.5 w-3.5" />
-            {adsets.length} público{adsets.length === 1 ? '' : 's'}
-          </span>
-        }
-      >
-        <ValidatedTable rows={adsets} />
-        <p className="mt-3 text-xs text-zinc-500">
-          Critério: investimento ≥ {brl(thresholds.minSpend)} por conjunto{' '}
-          <span className="text-zinc-600">e</span> taxa de agendamento ≥{' '}
-          {pct(thresholds.minTaxaAgendamento)} (no público e em cada criativo).
-        </p>
+        <LeadScoreTable buyers={compradores} />
       </Card>
     </div>
   );

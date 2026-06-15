@@ -145,6 +145,7 @@ export function computeSales(
         total: b.total,
         is1x1: true,
         matchType: 'override',
+        faturamento: b.faturamento,
       };
     }
     if (b.is1x1 === false) {
@@ -158,6 +159,7 @@ export function computeSales(
         total: b.total,
         is1x1: false,
         matchType: 'override',
+        faturamento: b.faturamento,
       };
     }
     // Auto match
@@ -173,6 +175,7 @@ export function computeSales(
       is1x1: m.matchType !== 'none',
       matchType: m.matchType,
       leadStatus: m.leadStatus,
+      faturamento: b.faturamento,
     };
   });
 

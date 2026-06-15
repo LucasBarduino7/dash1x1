@@ -224,6 +224,8 @@ export type BuyerMatch = {
   matchType: 'phone' | 'email' | 'name' | 'override' | 'none';
   /** Status do lead encontrado (quando matched) */
   leadStatus?: LeadStatus;
+  /** Lead Score — faturamento mensal do cliente (R$). Preenchido manualmente no comprador. */
+  faturamento?: number;
 };
 
 export type SalesData = {

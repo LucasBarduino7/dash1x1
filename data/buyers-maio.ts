@@ -22,6 +22,11 @@ export type Buyer = {
   obs?: string;
   /** Override manual da classificação 1x1 */
   is1x1?: boolean;
+  /**
+   * Lead Score — faturamento mensal do cliente (R$), preenchido manualmente.
+   * Usado na régua pago ÷ valor cheio do produto. Sem isso, a nota fica "—".
+   */
+  faturamento?: number;
 };
 
 export const COMPRADORES_MAIO: Buyer[] = [
