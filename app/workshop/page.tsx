@@ -14,6 +14,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { fetchWorkshopDashboard } from '@/lib/workshop/dashboard';
 import { PERIOD, daysUntil } from '@/lib/workshop/event';
@@ -122,6 +123,15 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
+      <Image
+        src="/banner-workshop.png"
+        alt="Agência Com.IA"
+        width={1920}
+        height={480}
+        priority
+        className="mb-6 h-auto w-full rounded-2xl"
+      />
+
       <Header
         event={event}
         daysToEvent={daysToEvent}
