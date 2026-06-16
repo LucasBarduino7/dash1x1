@@ -10,6 +10,7 @@ import { KPI } from '@/components/onex1/KPI';
 import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut';
 import { SalesChart } from '@/components/workshop/charts/SalesChart';
 import { getSocialSelling } from '@/lib/social/selling';
+import { RECEITAS_AVULSAS } from '@/data/geral-extras';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -79,6 +80,19 @@ export default async function Geral() {
       };
     })(),
   ];
+
+  // Receitas avulsas (não pertencem a nenhum canal) — entram só no consolidado.
+  const avulsoFat = RECEITAS_AVULSAS.reduce((a, r) => a + r.faturamento, 0);
+  if (avulsoFat > 0) {
+    canais.push({
+      nome: 'Outros (avulso)',
+      fat: avulsoFat,
+      posCash: 0,
+      vendas: RECEITAS_AVULSAS.length,
+      inv: 0,
+      ok: true,
+    });
+  }
   const totalFat = canais.reduce((a, c) => a + c.fat, 0);
   const totalPosCash = canais.reduce((a, c) => a + c.posCash, 0);
   const totalVendas = canais.reduce((a, c) => a + c.vendas, 0);
