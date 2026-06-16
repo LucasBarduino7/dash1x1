@@ -15,6 +15,30 @@ export type SocialInsightPoint = {
   reach: number;
 };
 
+export type SocialPost = {
+  id: string;
+  caption: string;
+  mediaType: string; // IMAGE | VIDEO | CAROUSEL_ALBUM | REELS
+  permalink: string;
+  thumbnailUrl: string;
+  timestamp: string; // ISO
+  likes: number;
+  comments: number;
+  reach: number | null;
+  saved: number | null;
+  shares: number | null;
+  views: number | null; // reels/vídeo
+};
+
+export type SocialBreakdownRow = { key: string; value: number };
+
+export type SocialDemographics = {
+  gender: SocialBreakdownRow[];
+  ages: SocialBreakdownRow[];
+  cities: SocialBreakdownRow[];
+  countries: SocialBreakdownRow[];
+};
+
 export type SocialSummary = {
   profile: SocialProfile;
   /** Métricas de insights (podem vir vazias se o app não tiver instagram_manage_insights). */
@@ -25,6 +49,10 @@ export type SocialSummary = {
   linkClicks: number | null;
   /** Série diária de alcance (vazia se insights indisponíveis). */
   timeline: SocialInsightPoint[];
+  /** Publicações recentes com métricas por post. */
+  posts: SocialPost[];
+  /** Demografia dos seguidores (gênero, idade, cidades, países). */
+  demographics: SocialDemographics;
   /** Avisos (ex.: permissões faltando). */
   warnings: string[];
   /** True quando ao menos uma métrica de insights veio. */
@@ -48,6 +76,8 @@ export function emptySocialSummary(): SocialSummary {
     totalInteractions: null,
     linkClicks: null,
     timeline: [],
+    posts: [],
+    demographics: { gender: [], ages: [], cities: [], countries: [] },
     warnings: [],
     insightsAvailable: false,
   };

@@ -3,9 +3,16 @@
 // publicações) funcionam com instagram_basic; alcance/engajamento exigem a
 // permissão instagram_manage_insights no app — quando ausente, degradamos com aviso.
 
-import { emptySocialSummary, type SocialSummary } from './types';
+import {
+  emptySocialSummary,
+  type SocialDemographics,
+  type SocialPost,
+  type SocialSummary,
+} from './types';
 
-const TOKEN = process.env.META_ACCESS_TOKEN!;
+// Token dedicado ao Instagram (System User com instagram_manage_insights).
+// Cai pro META_ACCESS_TOKEN (de Ads) só como fallback.
+const TOKEN = process.env.SOCIAL_ACCESS_TOKEN || process.env.META_ACCESS_TOKEN || '';
 const API_VERSION = process.env.META_API_VERSION || 'v23.0';
 const IG_ID = process.env.SOCIAL_IG_ACCOUNT_ID || '17841401139264770';
 const PAGE_ID = process.env.SOCIAL_FB_PAGE_ID || '255990344274075';
@@ -122,5 +129,112 @@ export async function fetchSocialSummary(period?: SocialPeriod): Promise<SocialS
     }
   }
 
+  // 3) Publicações recentes + métricas por post
+  try {
+    out.posts = await fetchPosts(pageToken);
+  } catch (e) {
+    out.warnings.push(`Publicações indisponíveis: ${msg(e)}`);
+  }
+
+  // 4) Demografia de seguidores (best-effort)
+  try {
+    out.demographics = await fetchDemographics(pageToken);
+  } catch {
+    /* demografia é opcional — silencioso */
+  }
+
+  return out;
+}
+
+/** Lista as últimas publicações e tenta puxar reach/saved/shares/views de cada uma. */
+async function fetchPosts(token: string, limit = 9): Promise<SocialPost[]> {
+  const media = (await gget(
+    `${IG_ID}/media`,
+    {
+      fields:
+        'id,caption,media_type,media_product_type,permalink,thumbnail_url,media_url,timestamp,like_count,comments_count',
+      limit: String(limit),
+    },
+    token,
+  )) as { data?: Record<string, unknown>[] };
+
+  const items = media.data || [];
+  return Promise.all(
+    items.map(async (m) => {
+      let reach: number | null = null;
+      let saved: number | null = null;
+      let shares: number | null = null;
+      let views: number | null = null;
+      try {
+        const ins = (await gget(
+          `${String(m.id)}/insights`,
+          { metric: 'reach,saved,shares,views' },
+          token,
+        )) as { data?: { name: string; values?: { value: number }[] }[] };
+        for (const it of ins.data || []) {
+          const v = it.values?.[0]?.value ?? null;
+          if (it.name === 'reach') reach = v;
+          else if (it.name === 'saved') saved = v;
+          else if (it.name === 'shares') shares = v;
+          else if (it.name === 'views') views = v;
+        }
+      } catch {
+        /* métricas por post são best-effort */
+      }
+      const productType = String(m.media_product_type ?? '');
+      return {
+        id: String(m.id ?? ''),
+        caption: String(m.caption ?? '').slice(0, 160),
+        mediaType: productType === 'REELS' ? 'REELS' : String(m.media_type ?? ''),
+        permalink: String(m.permalink ?? ''),
+        thumbnailUrl: String(m.thumbnail_url ?? m.media_url ?? ''),
+        timestamp: String(m.timestamp ?? ''),
+        likes: Number(m.like_count ?? 0),
+        comments: Number(m.comments_count ?? 0),
+        reach,
+        saved,
+        shares,
+        views,
+      };
+    }),
+  );
+}
+
+/** Demografia dos seguidores por gênero, idade, cidade e país. */
+async function fetchDemographics(token: string): Promise<SocialDemographics> {
+  const out: SocialDemographics = { gender: [], ages: [], cities: [], countries: [] };
+  const breakdowns: [string, keyof SocialDemographics][] = [
+    ['gender', 'gender'],
+    ['age', 'ages'],
+    ['city', 'cities'],
+    ['country', 'countries'],
+  ];
+  for (const [bd, key] of breakdowns) {
+    try {
+      const r = (await gget(
+        `${IG_ID}/insights`,
+        {
+          metric: 'follower_demographics',
+          period: 'lifetime',
+          metric_type: 'total_value',
+          timeframe: 'this_month',
+          breakdown: bd,
+        },
+        token,
+      )) as {
+        data?: {
+          total_value?: {
+            breakdowns?: { results?: { dimension_values?: string[]; value?: number }[] }[];
+          };
+        }[];
+      };
+      const results = r.data?.[0]?.total_value?.breakdowns?.[0]?.results || [];
+      out[key] = results
+        .map((x) => ({ key: x.dimension_values?.[0] ?? '—', value: Number(x.value ?? 0) }))
+        .sort((a, b) => b.value - a.value);
+    } catch {
+      /* cada breakdown é best-effort */
+    }
+  }
   return out;
 }
