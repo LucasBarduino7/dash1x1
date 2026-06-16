@@ -1,6 +1,6 @@
-// Dados manuais do canal Social Selling (preenchidos à mão).
-// Fonte da verdade até decidirmos puxar de planilha.
-// CPR e ROAS dependem do `custo` (custo do canal no mês — ex: SDR).
+// Dados manuais do FUNIL-TOPO do canal Social Selling (preenchidos à mão).
+// Vendas e faturamento NÃO ficam aqui — derivam dos compradores em data/social-buyers.ts
+// (ver lib/social/selling.ts). CPR e ROAS usam o `custo`.
 
 export type SocialSellingInput = {
   /** Conversas iniciadas/ativadas pelo SDR no Instagram. */
@@ -9,10 +9,6 @@ export type SocialSellingInput = {
   agendamentos: number;
   /** Reuniões realizadas (comparecimentos). */
   realizadas: number;
-  /** Vendas fechadas pelo canal. */
-  vendas: number;
-  /** Faturamento gerado pelo canal (R$). Base do ROAS. */
-  faturamento: number;
   /** Custo do canal no mês (R$) — ex: custo do SDR. Base de CPR e ROAS. */
   custo: number;
 };
@@ -21,7 +17,5 @@ export const SOCIAL_SELLING: SocialSellingInput = {
   ativacoes: 0,
   agendamentos: 0,
   realizadas: 0,
-  vendas: 0,
-  faturamento: 0,
   custo: 0,
 };

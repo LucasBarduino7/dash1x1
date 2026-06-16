@@ -9,7 +9,7 @@ import { Card } from '@/components/onex1/Card';
 import { KPI } from '@/components/onex1/KPI';
 import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut';
 import { SalesChart } from '@/components/workshop/charts/SalesChart';
-import { SOCIAL_SELLING } from '@/data/social-selling';
+import { getSocialSelling } from '@/lib/social/selling';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -65,13 +65,10 @@ export default async function Geral() {
       inv: workshopR.status === 'fulfilled' ? workshopR.value.meta.summary.spend : 0,
       ok: workshopR.status === 'fulfilled',
     },
-    {
-      nome: 'Social Selling',
-      fat: SOCIAL_SELLING.faturamento,
-      vendas: SOCIAL_SELLING.vendas,
-      inv: SOCIAL_SELLING.custo,
-      ok: true,
-    },
+    (() => {
+      const s = getSocialSelling();
+      return { nome: 'Social Selling', fat: s.faturamento, vendas: s.vendas, inv: s.custo, ok: true };
+    })(),
   ];
   const totalFat = canais.reduce((a, c) => a + c.fat, 0);
   const totalVendas = canais.reduce((a, c) => a + c.vendas, 0);

@@ -20,7 +20,7 @@ import { KPI } from '@/components/onex1/KPI';
 import { Card } from '@/components/onex1/Card';
 import { LeadScoreTable, notaComprador } from '@/components/onex1/LeadScoreTable';
 import { Sidebar, type SocialTab } from '@/components/social/Sidebar';
-import { SOCIAL_SELLING } from '@/data/social-selling';
+import { getSocialSelling } from '@/lib/social/selling';
 import { SOCIAL_BUYERS } from '@/data/social-buyers';
 import type { BuyerMatch } from '@/lib/onex1/types';
 import type { SocialBreakdownRow, SocialPost, SocialSummary } from '@/lib/social/types';
@@ -94,7 +94,7 @@ export default async function SocialSellingPage({
 // ---------- Métricas Principais (funil do canal) ----------
 
 function SectionPrincipais() {
-  const s = SOCIAL_SELLING;
+  const s = getSocialSelling();
   const taxa = (a: number, b: number) => (b > 0 ? (a / b) * 100 : 0);
   const taxaAgend = taxa(s.agendamentos, s.ativacoes);
   const taxaComp = taxa(s.realizadas, s.agendamentos);
