@@ -10,4 +10,5 @@ export type ReceitaAvulsa = {
 
 export const RECEITAS_AVULSAS: ReceitaAvulsa[] = [
   { nome: 'Mentorado (avulso)', faturamento: 25000, obs: 'Não pertence a nenhum canal' },
+  { nome: 'Angelo (Base)', faturamento: 12000, obs: 'Scale Anual (12m), full no cartão' },
 ];

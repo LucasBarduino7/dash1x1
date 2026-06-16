@@ -21,4 +21,20 @@ export const COMPRADORES_JUNHO: Buyer[] = [
     is1x1: true,
     faturamento: 35000, // fatura entre 30k e 40k
   },
+  {
+    id: '02',
+    date: '2026-06-16',
+    apelido: 'Felipe e Bruno',
+    plano: 'Scale Express (6m)',
+    nome: 'Growmetric Ltda.',
+    telefone: '+55 41 9881-6587',
+    email: 'felipe@growmetric.com.br',
+    cpfCnpj: '64.456.040/0001-25',
+    total: 6500,
+    recebidoMaio: 6500, // R$ 6.500 no Pix à vista
+    closer: 'Otávio',
+    obs: 'R$ 6.500 no Pix à vista. E-mails: felipe@ e bruno@growmetric.com.br',
+    is1x1: true,
+    faturamento: 20000,
+  },
 ];

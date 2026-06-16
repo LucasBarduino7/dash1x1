@@ -85,7 +85,7 @@ export default async function Geral() {
   const avulsoFat = RECEITAS_AVULSAS.reduce((a, r) => a + r.faturamento, 0);
   if (avulsoFat > 0) {
     canais.push({
-      nome: 'Outros (avulso)',
+      nome: 'Outros (Base / avulso)',
       fat: avulsoFat,
       posCash: 0,
       vendas: RECEITAS_AVULSAS.length,
