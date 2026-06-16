@@ -1,13 +1,15 @@
 import Link from 'next/link';
-import { ArrowRight, Users } from 'lucide-react';
+import { ArrowRight, Gauge, HandCoins, ShoppingBag, Users, Wallet } from 'lucide-react';
 import { fetchDashboardData } from '@/lib/onex1/dashboard';
 import { getMonth } from '@/lib/onex1/months';
 import { fetchWorkshopDashboard } from '@/lib/workshop/dashboard';
 import { fetchSocialSummary } from '@/lib/social/instagram';
-import { num } from '@/lib/shared/format';
+import { brl, num } from '@/lib/shared/format';
 import { Card } from '@/components/onex1/Card';
+import { KPI } from '@/components/onex1/KPI';
 import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut';
 import { SalesChart } from '@/components/workshop/charts/SalesChart';
+import { SOCIAL_SELLING } from '@/data/social-selling';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -47,6 +49,36 @@ export default async function Geral() {
     fetchSocialSummary(last30()),
   ]);
 
+  // Consolidação do ecossistema: vendas, faturamento e investimento de TODOS os canais.
+  const canais = [
+    {
+      nome: '1x1',
+      fat: onex1R.status === 'fulfilled' ? onex1R.value.sales.faturamento1x1 : 0,
+      vendas: onex1R.status === 'fulfilled' ? onex1R.value.sales.totalVendas : 0,
+      inv: onex1R.status === 'fulfilled' ? onex1R.value.meta.spendTotal : 0,
+      ok: onex1R.status === 'fulfilled',
+    },
+    {
+      nome: 'Workshop',
+      fat: workshopR.status === 'fulfilled' ? workshopR.value.kiwify.faturamentoTotal : 0,
+      vendas: workshopR.status === 'fulfilled' ? workshopR.value.kiwify.ingressos : 0,
+      inv: workshopR.status === 'fulfilled' ? workshopR.value.meta.summary.spend : 0,
+      ok: workshopR.status === 'fulfilled',
+    },
+    {
+      nome: 'Social Selling',
+      fat: SOCIAL_SELLING.faturamento,
+      vendas: SOCIAL_SELLING.vendas,
+      inv: SOCIAL_SELLING.custo,
+      ok: true,
+    },
+  ];
+  const totalFat = canais.reduce((a, c) => a + c.fat, 0);
+  const totalVendas = canais.reduce((a, c) => a + c.vendas, 0);
+  const totalInv = canais.reduce((a, c) => a + c.inv, 0);
+  const roasGeral = totalInv > 0 ? totalFat / totalInv : 0;
+  const roasTone = roasGeral >= 2 ? 'good' : roasGeral >= 1 ? 'warn' : 'bad';
+
   // Timeline combinada do workshop (ingressos por dia + investimento por dia)
   let workshopChart: { date: string; ingressos: number; spend: number }[] = [];
   if (workshopR.status === 'fulfilled') {
@@ -67,6 +99,87 @@ export default async function Geral() {
         <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Visão geral</h1>
         <p className="text-sm text-zinc-500">Resumo dos dashboards do ecossistema Scale</p>
       </div>
+
+      {/* Consolidado do ecossistema */}
+      <section className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <KPI
+          label="Faturamento total"
+          value={brl(totalFat)}
+          hint="Todos os canais somados"
+          icon={HandCoins}
+          tone="good"
+          size="lg"
+        />
+        <KPI
+          label="Vendas totais"
+          value={num(totalVendas)}
+          hint="1x1 + Workshop + Social"
+          icon={ShoppingBag}
+          tone="brand"
+          size="lg"
+        />
+        <KPI
+          label="Investimento total"
+          value={brl(totalInv)}
+          hint="Tudo que está sendo investido"
+          icon={Wallet}
+          tone="brand"
+          size="lg"
+        />
+        <KPI
+          label="ROAS geral"
+          value={`${roasGeral.toFixed(2).replace('.', ',')}×`}
+          hint="Faturamento ÷ investimento total"
+          icon={Gauge}
+          tone={roasTone}
+          size="lg"
+        />
+      </section>
+
+      {/* Quebra por canal */}
+      <Card className="mb-6" title="Por canal" subtitle="Faturamento, investimento e ROAS de cada dashboard">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-500">
+                <th className="px-3 py-2 font-medium">Canal</th>
+                <th className="px-3 py-2 text-right font-medium">Vendas</th>
+                <th className="px-3 py-2 text-right font-medium">Faturamento</th>
+                <th className="px-3 py-2 text-right font-medium">Investimento</th>
+                <th className="px-3 py-2 text-right font-medium">ROAS</th>
+              </tr>
+            </thead>
+            <tbody>
+              {canais.map((c) => {
+                const roas = c.inv > 0 ? c.fat / c.inv : 0;
+                return (
+                  <tr key={c.nome} className="border-b border-zinc-200 hover:bg-zinc-100">
+                    <td className="px-3 py-3 font-medium text-zinc-900">
+                      {c.nome}
+                      {!c.ok && <span className="ml-2 text-[10px] text-amber-600">indisponível</span>}
+                    </td>
+                    <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{num(c.vendas)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-zinc-900">{brl(c.fat)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(c.inv)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-zinc-700">
+                      {c.inv > 0 ? `${roas.toFixed(2).replace('.', ',')}×` : '—'}
+                    </td>
+                  </tr>
+                );
+              })}
+              <tr className="bg-tiffany-500/5">
+                <td className="px-3 py-3 font-semibold text-zinc-900">Total</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{num(totalVendas)}</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totalFat)}</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totalInv)}</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-tiffany-700">
+                  {totalInv > 0 ? `${roasGeral.toFixed(2).replace('.', ',')}×` : '—'}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* 1x1 — donut de qualificação */}
