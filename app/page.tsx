@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Gauge, HandCoins, ShoppingBag, Users, Wallet } from 'lucide-react';
+import { ArrowRight, CalendarClock, Gauge, HandCoins, ShoppingBag, Users, Wallet } from 'lucide-react';
 import { fetchDashboardData } from '@/lib/onex1/dashboard';
 import { getMonth } from '@/lib/onex1/months';
 import { fetchWorkshopDashboard } from '@/lib/workshop/dashboard';
@@ -54,6 +54,7 @@ export default async function Geral() {
     {
       nome: '1x1',
       fat: onex1R.status === 'fulfilled' ? onex1R.value.sales.faturamento1x1 : 0,
+      posCash: onex1R.status === 'fulfilled' ? onex1R.value.sales.posCash : 0,
       vendas: onex1R.status === 'fulfilled' ? onex1R.value.sales.totalVendas : 0,
       inv: onex1R.status === 'fulfilled' ? onex1R.value.meta.spendTotal : 0,
       ok: onex1R.status === 'fulfilled',
@@ -61,16 +62,25 @@ export default async function Geral() {
     {
       nome: 'Workshop',
       fat: workshopR.status === 'fulfilled' ? workshopR.value.kiwify.faturamentoTotal : 0,
+      posCash: 0, // ingressos pagos à vista (Kiwify) — sem parcelas a receber
       vendas: workshopR.status === 'fulfilled' ? workshopR.value.kiwify.ingressos : 0,
       inv: workshopR.status === 'fulfilled' ? workshopR.value.meta.summary.spend : 0,
       ok: workshopR.status === 'fulfilled',
     },
     (() => {
       const s = getSocialSelling();
-      return { nome: 'Social Selling', fat: s.faturamento, vendas: s.vendas, inv: s.custo, ok: true };
+      return {
+        nome: 'Social Selling',
+        fat: s.faturamento,
+        posCash: s.posCash,
+        vendas: s.vendas,
+        inv: s.custo,
+        ok: true,
+      };
     })(),
   ];
   const totalFat = canais.reduce((a, c) => a + c.fat, 0);
+  const totalPosCash = canais.reduce((a, c) => a + c.posCash, 0);
   const totalVendas = canais.reduce((a, c) => a + c.vendas, 0);
   const totalInv = canais.reduce((a, c) => a + c.inv, 0);
   const roasGeral = totalInv > 0 ? totalFat / totalInv : 0;
@@ -98,13 +108,21 @@ export default async function Geral() {
       </div>
 
       {/* Consolidado do ecossistema */}
-      <section className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <section className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
         <KPI
           label="Faturamento total"
           value={brl(totalFat)}
           hint="Todos os canais somados"
           icon={HandCoins}
           tone="good"
+          size="lg"
+        />
+        <KPI
+          label="Pós Cash total"
+          value={brl(totalPosCash)}
+          hint="Parcelas futuras a receber"
+          icon={CalendarClock}
+          tone="brand"
           size="lg"
         />
         <KPI
@@ -142,6 +160,7 @@ export default async function Geral() {
                 <th className="px-3 py-2 font-medium">Canal</th>
                 <th className="px-3 py-2 text-right font-medium">Vendas</th>
                 <th className="px-3 py-2 text-right font-medium">Faturamento</th>
+                <th className="px-3 py-2 text-right font-medium">A receber</th>
                 <th className="px-3 py-2 text-right font-medium">Investimento</th>
                 <th className="px-3 py-2 text-right font-medium">ROAS</th>
               </tr>
@@ -157,6 +176,7 @@ export default async function Geral() {
                     </td>
                     <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{num(c.vendas)}</td>
                     <td className="px-3 py-3 text-right tabular-nums text-zinc-900">{brl(c.fat)}</td>
+                    <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(c.posCash)}</td>
                     <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(c.inv)}</td>
                     <td className="px-3 py-3 text-right tabular-nums text-zinc-700">
                       {c.inv > 0 ? `${roas.toFixed(2).replace('.', ',')}×` : '—'}
@@ -168,6 +188,7 @@ export default async function Geral() {
                 <td className="px-3 py-3 font-semibold text-zinc-900">Total</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{num(totalVendas)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totalFat)}</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totalPosCash)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totalInv)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-tiffany-700">
                   {totalInv > 0 ? `${roasGeral.toFixed(2).replace('.', ',')}×` : '—'}

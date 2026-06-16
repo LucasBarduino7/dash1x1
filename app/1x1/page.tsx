@@ -2,6 +2,7 @@ import {
   AlertTriangle,
   BarChart3,
   CalendarCheck,
+  CalendarClock,
   Eye,
   Gauge,
   HandCoins,
@@ -192,12 +193,20 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
             </span>
           }
         >
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
             <KPI
               label="Faturamento"
               value={brl(data.sales.faturamento1x1)}
               hint="entrada + parcelas no mês"
               icon={HandCoins}
+              tone="brand"
+              size="lg"
+            />
+            <KPI
+              label="Pós Cash"
+              value={brl(data.sales.posCash)}
+              hint="Parcelas futuras a receber"
+              icon={CalendarClock}
               tone="brand"
               size="lg"
             />

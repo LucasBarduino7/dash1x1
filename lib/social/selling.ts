@@ -12,18 +12,22 @@ export type SocialSellingMetrics = {
   realizadas: number;
   vendas: number;
   faturamento: number;
+  /** Pós cash: parcelas futuras a receber (total - recebido) dos compradores do canal. */
+  posCash: number;
   custo: number;
 };
 
 export function getSocialSelling(): SocialSellingMetrics {
   const vendas = SOCIAL_BUYERS.length;
   const faturamento = SOCIAL_BUYERS.reduce((acc, b) => acc + b.recebidoMaio, 0);
+  const posCash = SOCIAL_BUYERS.reduce((acc, b) => acc + Math.max(0, b.total - b.recebidoMaio), 0);
   return {
     ativacoes: SOCIAL_SELLING.ativacoes,
     agendamentos: SOCIAL_SELLING.agendamentos,
     realizadas: SOCIAL_SELLING.realizadas,
     vendas,
     faturamento,
+    posCash,
     custo: SOCIAL_SELLING.custo,
   };
 }

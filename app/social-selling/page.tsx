@@ -3,8 +3,10 @@ import {
   AtSign,
   Bookmark,
   CalendarCheck,
+  CalendarClock,
   Eye,
   Gauge,
+  HandCoins,
   Heart,
   MessageCircle,
   MousePointerClick,
@@ -173,11 +175,13 @@ function SectionPrincipais() {
 
 function SectionCompradores({ buyers }: { buyers: BuyerMatch[] }) {
   const faturamento = buyers.reduce((acc, b) => acc + b.recebidoMaio, 0);
+  const posCash = buyers.reduce((acc, b) => acc + Math.max(0, b.total - b.recebidoMaio), 0);
   return (
     <div className="space-y-6">
       <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <KPI label="Compradores" value={num(buyers.length)} hint="Vendas do canal no mês" icon={ShoppingBag} tone="brand" size="lg" />
-        <KPI label="Faturamento" value={brl(faturamento)} hint="Recebido no mês" icon={Gauge} tone="brand" size="lg" />
+        <KPI label="Faturamento" value={brl(faturamento)} hint="Recebido no mês" icon={HandCoins} tone="brand" size="lg" />
+        <KPI label="Pós Cash" value={brl(posCash)} hint="Parcelas futuras a receber" icon={CalendarClock} tone="brand" size="lg" />
       </section>
       <Card
         title="Compradores do canal"

@@ -192,6 +192,8 @@ export function computeSales(
   const totalVendas = useOverrides
     ? overrides.vendas1x1 ?? buyers1x1.length
     : buyers1x1.length;
+  // Pós cash: parcelas futuras a receber dos 1x1 (total do contrato menos o já recebido).
+  const posCash = buyers1x1.reduce((acc, b) => acc + Math.max(0, b.total - b.recebidoMaio), 0);
   const ticketMedio = totalVendas > 0 ? faturamento1x1 / totalVendas : 0;
   const cac = totalVendas > 0 ? investmentTotal / totalVendas : 0;
   const roas = investmentTotal > 0 ? faturamento1x1 / investmentTotal : 0;
@@ -205,6 +207,7 @@ export function computeSales(
     totalVendas,
     totalBrutoMes,
     faturamento1x1,
+    posCash,
     ticketMedio,
     cac,
     roas,

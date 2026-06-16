@@ -232,6 +232,8 @@ export type SalesData = {
   totalVendas: number; // qtd vendas 1x1
   totalBrutoMes: number; // soma recebidoMaio de TODOS compradores (referência)
   faturamento1x1: number; // soma recebidoMaio de vendas 1x1
+  /** Pós cash: total a receber em parcelas futuras (soma de total - recebido) dos 1x1. */
+  posCash: number;
   ticketMedio: number;
   cac: number; // investimento / vendas 1x1
   roas: number; // faturamento 1x1 / investimento
