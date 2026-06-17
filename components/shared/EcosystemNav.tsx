@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, LayoutGrid, Ticket, Users } from 'lucide-react';
+import { BarChart3, CalendarDays, LayoutGrid, Ticket, Users } from 'lucide-react';
 
 const TABS = [
   { href: '/', label: 'Geral', icon: LayoutGrid, match: (p: string) => p === '/' },
@@ -13,6 +13,12 @@ const TABS = [
     label: 'Social Selling',
     icon: Users,
     match: (p: string) => p.startsWith('/social-selling'),
+  },
+  {
+    href: '/evento-presencial',
+    label: 'Evento Presencial',
+    icon: CalendarDays,
+    match: (p: string) => p.startsWith('/evento-presencial'),
   },
 ];
 
