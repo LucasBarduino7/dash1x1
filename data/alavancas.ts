@@ -18,7 +18,7 @@ export const ALAVANCAS: Alavanca[] = [
   { nome: 'Alavanca 04 - Workshop/Live', projetado: 300000, midia: 100000, roas: 3, realizado: 0, auto: 'workshop' },
   { nome: 'Alavanca 05 - Front End', projetado: 0, midia: 10000, realizado: 0 },
   { nome: 'Alavanca 05 - Base (Expansão)', projetado: 50000, midia: 0, realizado: 0 },
-  { nome: 'Alavanca 06 - Base (Comercial)', projetado: 60000, midia: 0, realizado: 0 },
+  { nome: 'Alavanca 06 - Base (Comercial)', projetado: 60000, midia: 0, realizado: 25000 },
   { nome: 'Alavanca 07 - Evento Presencial', projetado: 0, midia: 0, realizado: 0 },
   { nome: 'Alavanca 08 - Indicação', projetado: 0, midia: 0, realizado: 0 },
   { nome: 'Alavanca 09 - Osmose', projetado: 0, midia: 0, realizado: 0 },
