@@ -227,6 +227,14 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
               size="lg"
             />
             <KPI
+              label="Custo por reunião"
+              value={data.sales.reunioesRealizadas > 0 ? brl(data.sales.custoPorRealizada) : '—'}
+              hint={`${brl(data.meta.spendTotal)} ÷ ${num(data.sales.reunioesRealizadas)} realizadas`}
+              icon={CalendarCheck}
+              tone="brand"
+              size="lg"
+            />
+            <KPI
               label="Taxa de conversão"
               value={pct(taxaConversao)}
               hint={`${num(vendas)} vendas ÷ ${num(leads)} leads`}
