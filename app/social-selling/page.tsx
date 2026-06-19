@@ -83,7 +83,7 @@ export default async function SocialSellingPage({
       <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
         <Sidebar active={tab} />
         <div className="min-w-0 flex-1">
-          {tab === 'principais' && <SectionPrincipais />}
+          {tab === 'principais' && <SectionPrincipais buyers={buyers} />}
           {tab === 'secundarias' && data && <SectionSecundarias data={data} />}
           {tab === 'compradores' && <SectionCompradores buyers={buyers} />}
           {tab === 'leadscore' && <SectionLeadScore buyers={buyers} />}
@@ -95,8 +95,9 @@ export default async function SocialSellingPage({
 
 // ---------- Métricas Principais (funil do canal) ----------
 
-function SectionPrincipais() {
+function SectionPrincipais({ buyers }: { buyers: BuyerMatch[] }) {
   const s = getSocialSelling();
+  const posCash = buyers.reduce((acc, b) => acc + Math.max(0, b.total - b.recebidoMaio), 0);
   const taxa = (a: number, b: number) => (b > 0 ? (a / b) * 100 : 0);
   const taxaAgend = taxa(s.agendamentos, s.ativacoes);
   const taxaComp = taxa(s.realizadas, s.agendamentos);
@@ -167,6 +168,24 @@ function SectionPrincipais() {
           size="lg"
         />
       </section>
+
+      <Card
+        title="Vendas e compradores"
+        subtitle="Vendas fechadas pelo social selling no mês."
+        right={
+          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-700">
+            <ShoppingBag className="h-3.5 w-3.5" />
+            {num(s.vendas)} vendas · {brl(s.faturamento)}
+          </span>
+        }
+      >
+        <div className="mb-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <KPI label="Faturamento" value={brl(s.faturamento)} hint="Recebido no mês" icon={HandCoins} tone="brand" size="lg" />
+          <KPI label="Pós Cash" value={brl(posCash)} hint="Parcelas futuras a receber" icon={CalendarClock} tone="brand" size="lg" />
+        </div>
+        <h3 className="mb-3 text-sm font-medium text-zinc-800">Compradores do mês</h3>
+        <SocialBuyersTable buyers={buyers} />
+      </Card>
     </div>
   );
 }
