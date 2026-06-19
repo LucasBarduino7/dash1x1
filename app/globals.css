@@ -38,6 +38,14 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Brilho teal sutil no topo — identidade da marca (referência do banner). */
+body {
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(10, 186, 181, 0.16), transparent 70%),
+    var(--color-bg);
+  background-attachment: fixed;
+}
+
 * {
   border-color: var(--color-border);
 }
