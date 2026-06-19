@@ -11,7 +11,7 @@ import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut
 import { SalesChart } from '@/components/workshop/charts/SalesChart';
 import { getSocialSelling } from '@/lib/social/selling';
 import { RECEITAS_AVULSAS } from '@/data/geral-extras';
-import { ALAVANCAS, META_SCALE } from '@/data/alavancas';
+import { ALAVANCAS, META_SCALE_ROAS } from '@/data/alavancas';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -105,13 +105,21 @@ export default async function Geral() {
   const hoje = new Date();
   const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
   const diasRestantes = Math.max(1, ultimoDia - hoje.getDate() + 1);
+  // Realizado puxado ao vivo dos canais (o resto é manual da planilha).
+  const realizadoAuto: Record<NonNullable<(typeof ALAVANCAS)[number]['auto']>, number> = {
+    onex1: onex1R.status === 'fulfilled' ? onex1R.value.sales.faturamento1x1 : 0,
+    social: getSocialSelling().faturamento,
+    workshop: workshopR.status === 'fulfilled' ? workshopR.value.kiwify.faturamentoTotal : 0,
+  };
   const alavancas = ALAVANCAS.map((a) => {
-    const falta = Math.max(0, a.projetado - a.realizado);
+    const realizado = a.auto ? realizadoAuto[a.auto] : a.realizado;
+    const falta = Math.max(0, a.projetado - realizado);
     return {
       ...a,
+      realizado,
       falta,
       porDia: falta / diasRestantes,
-      batido: a.projetado > 0 && a.realizado >= a.projetado,
+      batido: a.projetado > 0 && realizado >= a.projetado,
     };
   });
   const totAlav = alavancas.reduce(
@@ -123,9 +131,6 @@ export default async function Geral() {
     }),
     { projetado: 0, midia: 0, realizado: 0, porDia: 0 },
   );
-  // Forecasting da meta Scale (target consolidado, não a soma das alavancas).
-  const scaleFalta = Math.max(0, META_SCALE.projetado - totAlav.realizado);
-  const scalePorDia = scaleFalta / diasRestantes;
 
   // Timeline combinada do workshop (ingressos por dia + investimento por dia)
   let workshopChart: { date: string; ingressos: number; spend: number }[] = [];
@@ -280,15 +285,15 @@ export default async function Geral() {
                 </tr>
               ))}
               <tr className="bg-tiffany-500/5">
-                <td className="px-3 py-3 font-semibold text-zinc-900">Scale (meta do mês)</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(META_SCALE.projetado)}</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(META_SCALE.midia)}</td>
+                <td className="px-3 py-3 font-semibold text-zinc-900">Scale (total a faturar)</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.projetado)}</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.midia)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-500">
-                  {META_SCALE.roas.toFixed(1).replace('.', ',')}×
+                  {META_SCALE_ROAS.toFixed(1).replace('.', ',')}×
                 </td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.realizado)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-tiffany-700">
-                  {scaleFalta > 0 ? `${brl(scalePorDia)}/dia` : '✓ batido'}
+                  {totAlav.porDia > 0 ? `${brl(totAlav.porDia)}/dia` : '✓ batido'}
                 </td>
               </tr>
             </tbody>
