@@ -23,6 +23,7 @@ import { Card } from '@/components/onex1/Card';
 import { LeadScoreTable, notaComprador } from '@/components/onex1/LeadScoreTable';
 import { Sidebar, type SocialTab } from '@/components/social/Sidebar';
 import { PageBanner } from '@/components/shared/PageBanner';
+import { SalesFunnel } from '@/components/shared/SalesFunnel';
 import { getSocialSelling } from '@/lib/social/selling';
 import { SOCIAL_BUYERS } from '@/data/social-buyers';
 import type { BuyerMatch } from '@/lib/onex1/types';
@@ -68,7 +69,7 @@ export default async function SocialSellingPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const sp = await searchParams;
-  const VALID: SocialTab[] = ['principais', 'secundarias', 'compradores', 'leadscore'];
+  const VALID: SocialTab[] = ['principais', 'funil', 'secundarias', 'compradores', 'leadscore'];
   const tab: SocialTab = VALID.includes(sp.tab as SocialTab) ? (sp.tab as SocialTab) : 'principais';
   // Insights do Instagram só são buscados na aba secundária (chamada pesada).
   const data = tab === 'secundarias' ? await fetchSocialSummary(last30()) : null;
@@ -87,12 +88,35 @@ export default async function SocialSellingPage({
         <Sidebar active={tab} />
         <div className="min-w-0 flex-1">
           {tab === 'principais' && <SectionPrincipais buyers={buyers} />}
+          {tab === 'funil' && <SectionFunil />}
           {tab === 'secundarias' && data && <SectionSecundarias data={data} />}
           {tab === 'compradores' && <SectionCompradores buyers={buyers} />}
           {tab === 'leadscore' && <SectionLeadScore buyers={buyers} />}
         </div>
       </div>
     </main>
+  );
+}
+
+// ---------- Funil de Vendas ----------
+
+function SectionFunil() {
+  const s = getSocialSelling();
+  return (
+    <Card
+      title="Funil de vendas"
+      subtitle="Da ativação à venda — quantidades e taxas de conversão entre as etapas."
+    >
+      <SalesFunnel
+        topLabel="das ativações"
+        stages={[
+          { label: 'Ativações', valor: s.ativacoes },
+          { label: 'Agendamentos', valor: s.agendamentos, stepLabel: 'agendamento' },
+          { label: 'Reuniões realizadas', valor: s.realizadas, stepLabel: 'comparecimento' },
+          { label: 'Vendas', valor: s.vendas, stepLabel: 'conversão' },
+        ]}
+      />
+    </Card>
   );
 }
 

@@ -2,13 +2,14 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
-import { Gauge, Users, Wallet, type LucideIcon } from 'lucide-react';
+import { Filter, Gauge, Users, Wallet, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/shared/cn';
 
-export type EventoTab = 'principais' | 'gastos' | 'compradores';
+export type EventoTab = 'principais' | 'funil' | 'gastos' | 'compradores';
 
 export const EVENTO_TABS: { key: EventoTab; label: string; icon: LucideIcon }[] = [
   { key: 'principais', label: 'Métricas Principais', icon: Gauge },
+  { key: 'funil', label: 'Funil de Vendas', icon: Filter },
   { key: 'gastos', label: 'Gastos do evento', icon: Wallet },
   { key: 'compradores', label: 'Compradores', icon: Users },
 ];

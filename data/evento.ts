@@ -31,6 +31,13 @@ export const EVENTO = {
   /** Data do evento (ISO) — opcional. */
   data: '',
 
+  /** Funil de reunião (igual ao 1x1): agendamentos/realizadas/vendas a partir do evento. Manual. */
+  funil: {
+    agendamentos: 0,
+    realizadas: 0,
+    vendas: 0,
+  },
+
   /** Gastos / investimento do evento. */
   gastos: [] as EventoGasto[],
 

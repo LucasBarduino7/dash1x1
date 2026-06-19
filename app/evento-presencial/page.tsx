@@ -15,6 +15,7 @@ import { KPI } from '@/components/onex1/KPI';
 import { Card } from '@/components/onex1/Card';
 import { Sidebar, type EventoTab } from '@/components/evento/Sidebar';
 import { PageBanner } from '@/components/shared/PageBanner';
+import { SalesFunnel } from '@/components/shared/SalesFunnel';
 import { EVENTO } from '@/data/evento';
 import { getEventoMetrics } from '@/lib/evento/metrics';
 
@@ -27,7 +28,7 @@ export default async function EventoPresencialPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const sp = await searchParams;
-  const VALID: EventoTab[] = ['principais', 'gastos', 'compradores'];
+  const VALID: EventoTab[] = ['principais', 'funil', 'gastos', 'compradores'];
   const tab: EventoTab = VALID.includes(sp.tab as EventoTab) ? (sp.tab as EventoTab) : 'principais';
   const m = getEventoMetrics();
 
@@ -64,6 +65,7 @@ export default async function EventoPresencialPage({
         <Sidebar active={tab} />
         <div className="min-w-0 flex-1">
           {tab === 'principais' && <SectionPrincipais m={m} />}
+          {tab === 'funil' && <SectionFunil m={m} />}
           {tab === 'gastos' && <SectionGastos m={m} />}
           {tab === 'compradores' && <SectionCompradores m={m} />}
         </div>
@@ -101,6 +103,27 @@ function SectionPrincipais({ m }: { m: Metrics }) {
         size="lg"
       />
     </section>
+  );
+}
+
+// ---------- Funil de Vendas ----------
+
+function SectionFunil({ m }: { m: Metrics }) {
+  return (
+    <Card
+      title="Funil de vendas"
+      subtitle="Reuniões agendadas a partir do evento, igual ao 1x1 — quantidades e taxas entre etapas."
+    >
+      <SalesFunnel
+        topLabel="das pessoas"
+        stages={[
+          { label: 'Pessoas no evento', valor: m.totalPessoas },
+          { label: 'Agendamentos', valor: m.funil.agendamentos, stepLabel: 'agendamento' },
+          { label: 'Reuniões realizadas', valor: m.funil.realizadas, stepLabel: 'comparecimento' },
+          { label: 'Vendas', valor: m.funil.vendas, stepLabel: 'conversão' },
+        ]}
+      />
+    </Card>
   );
 }
 

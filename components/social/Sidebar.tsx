@@ -2,13 +2,14 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
-import { Gauge, LineChart, ShoppingBag, Target, type LucideIcon } from 'lucide-react';
+import { Filter, Gauge, LineChart, ShoppingBag, Target, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/shared/cn';
 
-export type SocialTab = 'principais' | 'secundarias' | 'compradores' | 'leadscore';
+export type SocialTab = 'principais' | 'funil' | 'secundarias' | 'compradores' | 'leadscore';
 
 export const SOCIAL_TABS: { key: SocialTab; label: string; icon: LucideIcon }[] = [
   { key: 'principais', label: 'Métricas Principais', icon: Gauge },
+  { key: 'funil', label: 'Funil de Vendas', icon: Filter },
   { key: 'secundarias', label: 'Métricas Secundárias', icon: LineChart },
   { key: 'compradores', label: 'Compradores', icon: ShoppingBag },
   { key: 'leadscore', label: 'Lead Score', icon: Target },

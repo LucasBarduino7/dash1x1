@@ -17,5 +17,12 @@ export function getEventoMetrics() {
   const cpa = vendas > 0 ? gastoTotal / vendas : 0; // custo por comprador de ingresso
   const roas = gastoTotal > 0 ? faturamento / gastoTotal : 0;
 
-  return { gastoTotal, vendas, faturamento, convidados, totalPessoas, ticketMedio, cpa, roas };
+  // Funil de reunião (igual 1x1): topo = pessoas no evento.
+  const funil = {
+    agendamentos: EVENTO.funil.agendamentos,
+    realizadas: EVENTO.funil.realizadas,
+    vendas: EVENTO.funil.vendas,
+  };
+
+  return { gastoTotal, vendas, faturamento, convidados, totalPessoas, ticketMedio, cpa, roas, funil };
 }
