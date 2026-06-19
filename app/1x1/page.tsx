@@ -114,6 +114,7 @@ export default async function Page({
         <Sidebar active={tab} />
         <div className="min-w-0 flex-1">
           {tab === 'principais' && <SectionPrincipais data={data} />}
+          {tab === 'funil' && <SectionFunil data={data} />}
           {tab === 'secundarias' && <SectionSecundarias data={data} />}
           {tab === 'leadscore' && <SectionLeadScore data={data} />}
         </div>
@@ -123,6 +124,60 @@ export default async function Page({
         Dashboard apenas para leitura. Nenhuma alteração é feita em campanhas/conjuntos/anúncios do Meta Ads.
       </footer>
     </main>
+  );
+}
+
+// ---------- Funil de Vendas ----------
+
+function SectionFunil({ data }: { data: DashboardData }) {
+  const leads = data.meta.leadsMeta;
+  const agendamentos = data.leads.agendados;
+  const realizadas = data.sales.reunioesRealizadas;
+  const vendas = data.sales.totalVendas;
+  const rate = (a: number, b: number) => (b > 0 ? (a / b) * 100 : 0);
+
+  const etapas = [
+    { label: 'Leads', valor: leads, width: 100 },
+    { label: 'Agendamentos', valor: agendamentos, width: 75, step: rate(agendamentos, leads), stepLabel: 'agendamento' },
+    { label: 'Reuniões realizadas', valor: realizadas, width: 52, step: rate(realizadas, agendamentos), stepLabel: 'comparecimento' },
+    { label: 'Vendas', valor: vendas, width: 32, step: rate(vendas, realizadas), stepLabel: 'conversão' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <KPI label="Leads" value={num(leads)} hint="Topo do funil" icon={Users} tone="brand" size="lg" />
+        <KPI label="Agendamentos" value={num(agendamentos)} hint={`${pct(rate(agendamentos, leads))} dos leads`} icon={CalendarCheck} tone="brand" size="lg" />
+        <KPI label="Realizadas" value={num(realizadas)} hint={`${pct(rate(realizadas, leads))} dos leads`} icon={CalendarCheck} tone="brand" size="lg" />
+        <KPI label="Vendas" value={num(vendas)} hint={`${pct(rate(vendas, leads))} dos leads`} icon={ShoppingBag} tone="brand" size="lg" />
+      </section>
+
+      <Card title="Funil de vendas" subtitle="Do lead à venda — quantidades e taxas de conversão entre as etapas.">
+        <div className="py-2">
+          {etapas.map((e, i) => (
+            <div key={e.label}>
+              {i > 0 && (
+                <div className="flex items-center justify-center py-2">
+                  <span className="rounded-full bg-tiffany-500/10 px-3 py-1 text-xs font-medium text-tiffany-700">
+                    ↓ {pct(e.step!)} de {e.stepLabel}
+                  </span>
+                </div>
+              )}
+              <div
+                className="mx-auto flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-tiffany-500/25 to-tiffany-500/10 px-5 py-4 ring-1 ring-inset ring-tiffany-500/30"
+                style={{ width: `${e.width}%` }}
+              >
+                <span className="text-sm font-medium text-zinc-800">{e.label}</span>
+                <span className="flex items-baseline gap-2 whitespace-nowrap">
+                  <span className="text-2xl font-semibold tabular-nums text-zinc-900">{num(e.valor)}</span>
+                  <span className="text-xs text-zinc-500">{pct(rate(e.valor, leads))} dos leads</span>
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
   );
 }
 
