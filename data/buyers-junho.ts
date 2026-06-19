@@ -37,4 +37,19 @@ export const COMPRADORES_JUNHO: Buyer[] = [
     is1x1: true,
     faturamento: 20000,
   },
+  {
+    id: '03',
+    date: '2026-06-19',
+    apelido: 'Kelven',
+    plano: 'Scale Anual (12m)',
+    nome: 'Kelven Guedes Miranda',
+    telefone: '+55 62 9235-2638',
+    email: 'kelvenguedes@outlook.com',
+    total: 13000,
+    recebidoMaio: 3000, // entrada R$ 3.000 no Pix (parcelas só a partir de 05/08)
+    closer: 'Otávio',
+    obs: 'Entrada R$ 3.000 no Pix. 6x de R$ 1.666 a partir de 05/08.',
+    is1x1: true,
+    faturamento: 30000,
+  },
 ];
