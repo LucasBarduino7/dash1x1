@@ -22,6 +22,7 @@ import { KPI } from '@/components/onex1/KPI';
 import { Card } from '@/components/onex1/Card';
 import { LeadScoreTable, notaComprador } from '@/components/onex1/LeadScoreTable';
 import { Sidebar, type SocialTab } from '@/components/social/Sidebar';
+import { PageBanner } from '@/components/shared/PageBanner';
 import { getSocialSelling } from '@/lib/social/selling';
 import { SOCIAL_BUYERS } from '@/data/social-buyers';
 import type { BuyerMatch } from '@/lib/onex1/types';
@@ -75,6 +76,8 @@ export default async function SocialSellingPage({
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
+      <PageBanner src="/banner-social.png" alt="Social Selling · Grupo Scale" />
+
       <div className="mb-8">
         <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Social Selling</h1>
         <p className="text-sm text-zinc-500">Funil do canal de prospecção no Instagram</p>

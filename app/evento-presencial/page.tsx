@@ -14,6 +14,7 @@ import { brl, formatDateBR, num } from '@/lib/shared/format';
 import { KPI } from '@/components/onex1/KPI';
 import { Card } from '@/components/onex1/Card';
 import { Sidebar, type EventoTab } from '@/components/evento/Sidebar';
+import { PageBanner } from '@/components/shared/PageBanner';
 import { EVENTO } from '@/data/evento';
 import { getEventoMetrics } from '@/lib/evento/metrics';
 
@@ -37,6 +38,8 @@ export default async function EventoPresencialPage({
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
+      <PageBanner src="/banner-evento.png" alt="Evento Presencial · Grupo Scale" />
+
       <div className="mb-8 flex items-center gap-3">
         <span className="grid h-11 w-11 place-items-center rounded-xl bg-tiffany-500/10 text-tiffany-600">
           <CalendarDays className="h-5 w-5" />

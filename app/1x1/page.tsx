@@ -23,6 +23,7 @@ import { Header } from '@/components/onex1/Header';
 import { KPI } from '@/components/onex1/KPI';
 import { LeadScoreTable, notaComprador } from '@/components/onex1/LeadScoreTable';
 import { Sidebar } from '@/components/onex1/Sidebar';
+import { PageBanner } from '@/components/shared/PageBanner';
 import { TABS, type TabKey } from '@/lib/onex1/tabs';
 import type { DashboardData } from '@/lib/onex1/types';
 
@@ -86,6 +87,8 @@ export default async function Page({
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8 md:py-10">
+      <PageBanner src="/banner-1x1.png" alt="1x1 · Grupo Scale" />
+
       <Header
         period={data.period}
         activeMonth={data.activeMonth}
