@@ -35,4 +35,19 @@ export const SOCIAL_BUYERS: Buyer[] = [
     obs: 'Entrada R$ 4.000 (R$ 2.000 Pix + R$ 2.000 cartão). 4x de R$ 2.000 dia 20, a partir de julho.',
     faturamento: 25000, // fatura de 20k a 30k
   },
+  {
+    id: '03',
+    date: '2026-06-18',
+    apelido: 'Lucas',
+    plano: 'Scale Anual (6m)',
+    nome: 'Lupes Marketing',
+    telefone: '+55 33 9973-7390',
+    email: 'lupesmarketing@gmail.com',
+    cpfCnpj: '56.342.804/0001-23',
+    total: 12000,
+    recebidoMaio: 5000, // entrada R$ 5.000 (R$ 3.500 cartão hoje + R$ 1.500 Pix 25/06) — parcelas só a partir de 05/08
+    closer: 'Otávio',
+    obs: 'Entrada R$ 5.000 (R$ 3.500 cartão + R$ 1.500 Pix 25/06). 5x de R$ 1.400 a partir de 05/08.',
+    faturamento: 20000,
+  },
 ];

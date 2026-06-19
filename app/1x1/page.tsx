@@ -193,7 +193,7 @@ function SectionPrincipais({ data }: { data: DashboardData }) {
             </span>
           }
         >
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
             <KPI
               label="Faturamento"
               value={brl(data.sales.faturamento1x1)}

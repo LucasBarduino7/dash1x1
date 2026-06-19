@@ -16,6 +16,6 @@ export type SocialSellingInput = {
 export const SOCIAL_SELLING: SocialSellingInput = {
   ativacoes: 0,
   agendamentos: 0,
-  realizadas: 0,
+  realizadas: 8,
   custo: 0,
 };
