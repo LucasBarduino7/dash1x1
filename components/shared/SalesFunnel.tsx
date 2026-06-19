@@ -27,7 +27,7 @@ export function SalesFunnel({ stages, topLabel = 'do topo' }: { stages: FunnelSt
             </div>
           )}
           <div
-            className="mx-auto flex items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-tiffany-500/25 to-tiffany-500/10 px-5 py-4 ring-1 ring-inset ring-tiffany-500/30"
+            className="mx-auto flex min-w-[230px] max-w-full items-center justify-between gap-3 rounded-xl bg-gradient-to-r from-tiffany-500/25 to-tiffany-500/10 px-4 py-4 ring-1 ring-inset ring-tiffany-500/30 sm:px-5"
             style={{ width: `${WIDTHS[i] ?? 18}%` }}
           >
             <span className="text-sm font-medium text-zinc-800">{s.label}</span>
