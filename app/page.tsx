@@ -11,7 +11,7 @@ import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut
 import { SalesChart } from '@/components/workshop/charts/SalesChart';
 import { getSocialSelling } from '@/lib/social/selling';
 import { RECEITAS_AVULSAS } from '@/data/geral-extras';
-import { ALAVANCAS, META_SCALE_ROAS } from '@/data/alavancas';
+import { ALAVANCAS } from '@/data/alavancas';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -120,6 +120,8 @@ export default async function Geral() {
       falta,
       porDia: falta / diasRestantes,
       batido: a.projetado > 0 && realizado >= a.projetado,
+      // ROAS atual = quanto retornou por R$ 1 de mídia (não o alvo).
+      roasAtual: a.midia > 0 ? realizado / a.midia : null,
     };
   });
   const totAlav = alavancas.reduce(
@@ -249,7 +251,7 @@ export default async function Geral() {
       <Card
         className="mb-6"
         title="Alavancas & projeções"
-        subtitle="Projetado a receber · Mídia a investir · Realizado (o que temos) · Forecasting (quanto falta por dia pra bater)"
+        subtitle="Projetado a receber · Mídia a investir · ROAS atual (realizado ÷ mídia) · Realizado (o que temos) · Forecasting (quanto falta por dia pra bater)"
       >
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -270,7 +272,7 @@ export default async function Geral() {
                   <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(a.projetado)}</td>
                   <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(a.midia)}</td>
                   <td className="px-3 py-3 text-right tabular-nums text-zinc-500">
-                    {a.roas ? `${a.roas.toFixed(1).replace('.', ',')}×` : '—'}
+                    {a.roasAtual != null ? `${a.roasAtual.toFixed(2).replace('.', ',')}×` : '—'}
                   </td>
                   <td className="px-3 py-3 text-right tabular-nums text-zinc-900">{brl(a.realizado)}</td>
                   <td className="px-3 py-3 text-right tabular-nums">
@@ -289,7 +291,9 @@ export default async function Geral() {
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.projetado)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.midia)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-500">
-                  {META_SCALE_ROAS.toFixed(1).replace('.', ',')}×
+                  {totAlav.midia > 0
+                    ? `${(totAlav.realizado / totAlav.midia).toFixed(2).replace('.', ',')}×`
+                    : '—'}
                 </td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.realizado)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-tiffany-700">
