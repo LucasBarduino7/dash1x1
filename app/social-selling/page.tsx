@@ -328,7 +328,7 @@ function SectionSecundarias({ data }: { data: SocialSummary }) {
 
       {/* Perfil */}
       <div>
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-zinc-500">Perfil</h2>
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-tiffany-700">Perfil</h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
           <KPI label="Seguidores" value={num(profile.followerCount)} icon={Users} tone="brand" size="lg" />
           <KPI label="Publicações" value={num(profile.mediaCount)} icon={AtSign} tone="brand" />
@@ -344,7 +344,7 @@ function SectionSecundarias({ data }: { data: SocialSummary }) {
 
       {/* Alcance & engajamento */}
       <div>
-        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-zinc-500">
+        <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-tiffany-700">
           Alcance &amp; engajamento · 30 dias
         </h2>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -360,7 +360,7 @@ function SectionSecundarias({ data }: { data: SocialSummary }) {
         demographics.ages.length > 0 ||
         demographics.cities.length > 0) && (
         <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-zinc-500">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-tiffany-700">
             Demografia dos seguidores
           </h2>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -385,7 +385,7 @@ function SectionSecundarias({ data }: { data: SocialSummary }) {
       {/* Posts */}
       {topPosts.length > 0 && (
         <div>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-zinc-500">
+          <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-tiffany-700">
             Publicações recentes · ordenadas por engajamento
           </h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
