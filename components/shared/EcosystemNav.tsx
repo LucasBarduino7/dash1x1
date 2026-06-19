@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, CalendarDays, LayoutGrid, Ticket, Users } from 'lucide-react';
+import { BarChart3, CalendarDays, LayoutGrid, Ticket, TrendingUp, Users } from 'lucide-react';
 
 const TABS = [
   { href: '/', label: 'Geral', icon: LayoutGrid, match: (p: string) => p === '/' },
+  { href: '/projecoes', label: 'Projeções', icon: TrendingUp, match: (p: string) => p.startsWith('/projecoes') },
   { href: '/workshop', label: 'Workshop', icon: Ticket, match: (p: string) => p.startsWith('/workshop') },
   { href: '/1x1', label: '1x1', icon: BarChart3, match: (p: string) => p.startsWith('/1x1') },
   {

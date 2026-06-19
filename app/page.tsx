@@ -11,7 +11,6 @@ import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut
 import { SalesChart } from '@/components/workshop/charts/SalesChart';
 import { getSocialSelling } from '@/lib/social/selling';
 import { RECEITAS_AVULSAS } from '@/data/geral-extras';
-import { ALAVANCAS } from '@/data/alavancas';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -100,39 +99,6 @@ export default async function Geral() {
   const totalInv = canais.reduce((a, c) => a + c.inv, 0);
   const roasGeral = totalInv > 0 ? totalFat / totalInv : 0;
   const roasTone = roasGeral >= 2 ? 'good' : roasGeral >= 1 ? 'warn' : 'bad';
-
-  // Alavancas & forecasting: o que falta pra bater o projetado, dividido pelos dias restantes do mês.
-  const hoje = new Date();
-  const ultimoDia = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate();
-  const diasRestantes = Math.max(1, ultimoDia - hoje.getDate() + 1);
-  // Realizado puxado ao vivo dos canais (o resto é manual da planilha).
-  const realizadoAuto: Record<NonNullable<(typeof ALAVANCAS)[number]['auto']>, number> = {
-    onex1: onex1R.status === 'fulfilled' ? onex1R.value.sales.faturamento1x1 : 0,
-    social: getSocialSelling().faturamento,
-    workshop: workshopR.status === 'fulfilled' ? workshopR.value.kiwify.faturamentoTotal : 0,
-  };
-  const alavancas = ALAVANCAS.map((a) => {
-    const realizado = a.auto ? realizadoAuto[a.auto] : a.realizado;
-    const falta = Math.max(0, a.projetado - realizado);
-    return {
-      ...a,
-      realizado,
-      falta,
-      porDia: falta / diasRestantes,
-      batido: a.projetado > 0 && realizado >= a.projetado,
-      // ROAS atual = quanto retornou por R$ 1 de mídia (não o alvo).
-      roasAtual: a.midia > 0 ? realizado / a.midia : null,
-    };
-  });
-  const totAlav = alavancas.reduce(
-    (acc, a) => ({
-      projetado: acc.projetado + a.projetado,
-      midia: acc.midia + a.midia,
-      realizado: acc.realizado + a.realizado,
-      porDia: acc.porDia + a.porDia,
-    }),
-    { projetado: 0, midia: 0, realizado: 0, porDia: 0 },
-  );
 
   // Timeline combinada do workshop (ingressos por dia + investimento por dia)
   let workshopChart: { date: string; ingressos: number; spend: number }[] = [];
@@ -245,68 +211,6 @@ export default async function Geral() {
             </tbody>
           </table>
         </div>
-      </Card>
-
-      {/* Alavancas & projeções */}
-      <Card
-        className="mb-6"
-        title="Alavancas & projeções"
-        subtitle="Projetado a receber · Mídia a investir · ROAS atual (realizado ÷ mídia) · Realizado (o que temos) · Forecasting (quanto falta por dia pra bater)"
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 text-left text-xs uppercase tracking-wider text-zinc-500">
-                <th className="px-3 py-2 font-medium">Alavanca</th>
-                <th className="px-3 py-2 text-right font-medium">Projetado</th>
-                <th className="px-3 py-2 text-right font-medium">Mídia</th>
-                <th className="px-3 py-2 text-right font-medium">ROAS</th>
-                <th className="px-3 py-2 text-right font-medium">Realizado</th>
-                <th className="px-3 py-2 text-right font-medium">Forecasting (R$/dia)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {alavancas.map((a) => (
-                <tr key={a.nome} className="border-b border-zinc-200 hover:bg-zinc-100">
-                  <td className="px-3 py-3 font-medium text-zinc-900">{a.nome}</td>
-                  <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(a.projetado)}</td>
-                  <td className="px-3 py-3 text-right tabular-nums text-zinc-700">{brl(a.midia)}</td>
-                  <td className="px-3 py-3 text-right tabular-nums text-zinc-500">
-                    {a.roasAtual != null ? `${a.roasAtual.toFixed(2).replace('.', ',')}×` : '—'}
-                  </td>
-                  <td className="px-3 py-3 text-right tabular-nums text-zinc-900">{brl(a.realizado)}</td>
-                  <td className="px-3 py-3 text-right tabular-nums">
-                    {a.projetado === 0 ? (
-                      <span className="text-zinc-400">—</span>
-                    ) : a.batido ? (
-                      <span className="font-medium text-emerald-600">✓ batido</span>
-                    ) : (
-                      <span className="font-medium text-tiffany-700">{brl(a.porDia)}/dia</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-              <tr className="bg-tiffany-500/5">
-                <td className="px-3 py-3 font-semibold text-zinc-900">Scale (total a faturar)</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.projetado)}</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.midia)}</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-500">
-                  {totAlav.midia > 0
-                    ? `${(totAlav.realizado / totAlav.midia).toFixed(2).replace('.', ',')}×`
-                    : '—'}
-                </td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.realizado)}</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-tiffany-700">
-                  {totAlav.porDia > 0 ? `${brl(totAlav.porDia)}/dia` : '✓ batido'}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p className="mt-3 text-xs text-zinc-500">
-          Forecasting = (Projetado − Realizado) ÷ {diasRestantes} dias restantes no mês — quanto
-          precisa entrar por dia pra bater a meta.
-        </p>
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
