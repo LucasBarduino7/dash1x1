@@ -1,8 +1,13 @@
 import {
+  AlertTriangle,
+  BarChart3,
   CalendarDays,
+  Eye,
   Gauge,
   HandCoins,
   Megaphone,
+  MousePointerClick,
+  Percent,
   ReceiptText,
   ShoppingBag,
   Target,
@@ -10,7 +15,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { brl, formatDateBR, num } from '@/lib/shared/format';
+import { brl, formatDateBR, num, pct } from '@/lib/shared/format';
 import { KPI } from '@/components/onex1/KPI';
 import { Card } from '@/components/onex1/Card';
 import { Sidebar, type EventoTab } from '@/components/evento/Sidebar';
@@ -18,6 +23,7 @@ import { PageBanner } from '@/components/shared/PageBanner';
 import { SalesFunnel } from '@/components/shared/SalesFunnel';
 import { EVENTO } from '@/data/evento';
 import { getEventoMetrics } from '@/lib/evento/metrics';
+import { fetchEventoMeta, type EventoMeta } from '@/lib/evento/meta';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -28,9 +34,11 @@ export default async function EventoPresencialPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const sp = await searchParams;
-  const VALID: EventoTab[] = ['principais', 'funil', 'gastos', 'compradores'];
+  const VALID: EventoTab[] = ['principais', 'funil', 'midia', 'gastos', 'compradores'];
   const tab: EventoTab = VALID.includes(sp.tab as EventoTab) ? (sp.tab as EventoTab) : 'principais';
   const m = getEventoMetrics();
+  // Métricas de mídia só são buscadas na aba de mídia (chamada à Meta API).
+  const meta = tab === 'midia' ? await fetchEventoMeta() : null;
 
   const semDados =
     EVENTO.gastos.length === 0 &&
@@ -66,6 +74,7 @@ export default async function EventoPresencialPage({
         <div className="min-w-0 flex-1">
           {tab === 'principais' && <SectionPrincipais m={m} />}
           {tab === 'funil' && <SectionFunil m={m} />}
+          {tab === 'midia' && meta && <SectionMidia meta={meta} />}
           {tab === 'gastos' && <SectionGastos m={m} />}
           {tab === 'compradores' && <SectionCompradores m={m} />}
         </div>
@@ -124,6 +133,36 @@ function SectionFunil({ m }: { m: Metrics }) {
         ]}
       />
     </Card>
+  );
+}
+
+// ---------- Métricas de mídia (Meta Ads) ----------
+
+function SectionMidia({ meta }: { meta: EventoMeta }) {
+  return (
+    <div className="space-y-6">
+      {!meta.hasData && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            {meta.configured
+              ? `Aguardando a campanha do evento (filtro "${meta.filter}"). Assim que ativar amanhã, os números preenchem sozinhos — ou ajuste o filtro na env EVENTO_CAMPAIGN_FILTER.`
+              : meta.warning}
+          </span>
+        </div>
+      )}
+
+      <section className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+        <KPI label="Investimento" value={brl(meta.spend)} hint="Total gasto (Meta)" icon={Wallet} tone="brand" size="lg" />
+        <KPI label="CPM" value={meta.impressions > 0 ? brl(meta.cpm) : '—'} hint="Custo por mil impressões" icon={BarChart3} tone="brand" size="lg" />
+        <KPI label="CTR" value={meta.impressions > 0 ? pct(meta.ctr) : '—'} hint="Cliques / impressões" icon={MousePointerClick} tone="brand" size="lg" />
+        <KPI label="Connect rate" value={meta.linkClicks > 0 ? pct(meta.connectRate) : '—'} hint="LP views / cliques" icon={Eye} tone="brand" size="lg" />
+        <KPI label="CPL" value={meta.leads > 0 ? brl(meta.cpl) : '—'} hint="Custo por lead" icon={Target} tone="brand" size="lg" />
+        <KPI label="Leads" value={num(meta.leads)} hint="Registrados pela campanha" icon={Users} tone="brand" size="lg" />
+        <KPI label="CPC" value={meta.clicks > 0 ? brl(meta.cpc) : '—'} hint="Custo por clique" icon={Percent} tone="brand" size="lg" />
+        <KPI label="Cliques no link" value={num(meta.linkClicks)} hint="Inline link clicks" icon={MousePointerClick} tone="brand" size="lg" />
+      </section>
+    </div>
   );
 }
 
