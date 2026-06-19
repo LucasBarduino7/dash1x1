@@ -11,7 +11,7 @@ import { QualificationDonut } from '@/components/onex1/charts/QualificationDonut
 import { SalesChart } from '@/components/workshop/charts/SalesChart';
 import { getSocialSelling } from '@/lib/social/selling';
 import { RECEITAS_AVULSAS } from '@/data/geral-extras';
-import { ALAVANCAS, META_SCALE_ROAS } from '@/data/alavancas';
+import { ALAVANCAS, META_SCALE } from '@/data/alavancas';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -123,6 +123,9 @@ export default async function Geral() {
     }),
     { projetado: 0, midia: 0, realizado: 0, porDia: 0 },
   );
+  // Forecasting da meta Scale (target consolidado, não a soma das alavancas).
+  const scaleFalta = Math.max(0, META_SCALE.projetado - totAlav.realizado);
+  const scalePorDia = scaleFalta / diasRestantes;
 
   // Timeline combinada do workshop (ingressos por dia + investimento por dia)
   let workshopChart: { date: string; ingressos: number; spend: number }[] = [];
@@ -277,15 +280,15 @@ export default async function Geral() {
                 </tr>
               ))}
               <tr className="bg-tiffany-500/5">
-                <td className="px-3 py-3 font-semibold text-zinc-900">Scale (total)</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.projetado)}</td>
-                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.midia)}</td>
+                <td className="px-3 py-3 font-semibold text-zinc-900">Scale (meta do mês)</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(META_SCALE.projetado)}</td>
+                <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(META_SCALE.midia)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-500">
-                  {META_SCALE_ROAS.toFixed(1).replace('.', ',')}×
+                  {META_SCALE.roas.toFixed(1).replace('.', ',')}×
                 </td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-zinc-900">{brl(totAlav.realizado)}</td>
                 <td className="px-3 py-3 text-right font-semibold tabular-nums text-tiffany-700">
-                  {brl(totAlav.porDia)}/dia
+                  {scaleFalta > 0 ? `${brl(scalePorDia)}/dia` : '✓ batido'}
                 </td>
               </tr>
             </tbody>
