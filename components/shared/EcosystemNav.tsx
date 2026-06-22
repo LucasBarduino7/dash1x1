@@ -24,7 +24,7 @@ const TABS = [
 
 export function EcosystemNav() {
   const pathname = usePathname() || '/';
-  if (pathname === '/login') return null;
+  if (pathname === '/login' || pathname.startsWith('/entrega')) return null;
 
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
