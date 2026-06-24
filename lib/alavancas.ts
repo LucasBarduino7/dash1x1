@@ -4,7 +4,7 @@ import { fetchDashboardData } from '@/lib/onex1/dashboard';
 import { getMonth } from '@/lib/onex1/months';
 import { fetchWorkshopDashboard } from '@/lib/workshop/dashboard';
 import { getSocialSelling } from '@/lib/social/selling';
-import { ALAVANCAS } from '@/data/alavancas';
+import { ALAVANCAS, WORKSHOP_AJUSTE_MANUAL, META_SCALE_TOTAL } from '@/data/alavancas';
 
 export async function getAlavancas() {
   const month = getMonth(undefined);
@@ -17,7 +17,9 @@ export async function getAlavancas() {
   const realizadoAuto = {
     onex1: onex1R.status === 'fulfilled' ? onex1R.value.sales.faturamento1x1 : 0,
     social: getSocialSelling().faturamento,
-    workshop: workshopR.status === 'fulfilled' ? workshopR.value.kiwify.faturamentoTotal : 0,
+    workshop:
+      (workshopR.status === 'fulfilled' ? workshopR.value.kiwify.faturamentoTotal : 0) +
+      WORKSHOP_AJUSTE_MANUAL,
   };
 
   const hoje = new Date();
@@ -42,19 +44,25 @@ export async function getAlavancas() {
     };
   });
 
-  const totAlav = alavancas.reduce(
+  const somas = alavancas.reduce(
     (acc, a) => ({
-      projetado: acc.projetado + a.projetado,
       midia: acc.midia + a.midia,
       realizado: acc.realizado + a.realizado,
-      porDia: acc.porDia + a.porDia,
     }),
-    { projetado: 0, midia: 0, realizado: 0, porDia: 0 },
+    { midia: 0, realizado: 0 },
   );
+
+  // Meta consolidada fixa (336k). Forecasting total = (meta − realizado) ÷ dias restantes.
+  const faltaTotal = Math.max(0, META_SCALE_TOTAL - somas.realizado);
+  const totAlav = {
+    projetado: META_SCALE_TOTAL,
+    midia: somas.midia,
+    realizado: somas.realizado,
+    porDia: faltaTotal / diasRestantes,
+  };
 
   const pctTotal = totAlav.projetado > 0 ? Math.min(1, totAlav.realizado / totAlav.projetado) : 0;
   const roasTotal = totAlav.midia > 0 ? totAlav.realizado / totAlav.midia : null;
-  const faltaTotal = Math.max(0, totAlav.projetado - totAlav.realizado);
 
   return { alavancas, totAlav, diasRestantes, pctTotal, roasTotal, faltaTotal, mesLabel: month.label };
 }

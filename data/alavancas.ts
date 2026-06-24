@@ -24,5 +24,11 @@ export const ALAVANCAS: Alavanca[] = [
   { nome: 'Alavanca 09 - Osmose', projetado: 0, midia: 0, realizado: 0 },
 ];
 
+/** Ajuste manual somado ao realizado do Workshop (vendas fora do Kiwify, order bumps manuais, etc.). */
+export const WORKSHOP_AJUSTE_MANUAL = 82000;
+
+/** Meta consolidada do mês (R$). A linha "Scale · total" e o forecasting usam este número. */
+export const META_SCALE_TOTAL = 336000;
+
 /** ROAS alvo consolidado do Scale (linha de total). */
 export const META_SCALE_ROAS = 3.5;
