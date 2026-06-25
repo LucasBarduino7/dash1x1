@@ -1,0 +1,18 @@
+{
+  "investimento_total": 50000,
+  "cpm_teto": 50,
+  "ctr_piso": 1.2,
+  "cpl_meta": 70,
+  "leads_meta": 714,
+  "taxa_agendamento": 0.30,
+  "agendamentos_meta": 214,
+  "taxa_comparecimento": 0.70,
+  "realizadas_meta": 150,
+  "taxa_conversao_venda": 0.30,
+  "vendas_meta": 45,
+  "cac_meta": 1111,
+  "custo_por_reuniao_meta": 333,
+  "preco_venda": 0,
+  "data_inicio": "",
+  "data_fim": ""
+}

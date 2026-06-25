@@ -21,8 +21,10 @@ import { Card } from '@/components/onex1/Card';
 import { Sidebar, type EventoTab } from '@/components/evento/Sidebar';
 import { PageBanner } from '@/components/shared/PageBanner';
 import { SalesFunnel } from '@/components/shared/SalesFunnel';
+import { ProjecaoSection } from '@/components/evento/ProjecaoSection';
 import { EVENTO } from '@/data/evento';
 import { getEventoMetrics } from '@/lib/evento/metrics';
+import { getProjecao } from '@/lib/evento/projecao';
 import { fetchEventoMeta, type EventoMeta } from '@/lib/evento/meta';
 
 export const dynamic = 'force-dynamic';
@@ -34,11 +36,12 @@ export default async function EventoPresencialPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const sp = await searchParams;
-  const VALID: EventoTab[] = ['principais', 'funil', 'midia', 'gastos', 'compradores'];
+  const VALID: EventoTab[] = ['principais', 'projecao', 'funil', 'midia', 'gastos', 'compradores'];
   const tab: EventoTab = VALID.includes(sp.tab as EventoTab) ? (sp.tab as EventoTab) : 'principais';
   const m = getEventoMetrics();
-  // Métricas de mídia só são buscadas na aba de mídia (chamada à Meta API).
-  const meta = tab === 'midia' ? await fetchEventoMeta() : null;
+  // Métricas de mídia (Meta API) entram na aba de mídia e na projeção (CPM/CTR/CPL realizados).
+  const meta = tab === 'midia' || tab === 'projecao' ? await fetchEventoMeta() : null;
+  const projecao = tab === 'projecao' ? getProjecao(meta) : null;
 
   const semDados =
     EVENTO.gastos.length === 0 &&
@@ -73,6 +76,7 @@ export default async function EventoPresencialPage({
         <Sidebar active={tab} />
         <div className="min-w-0 flex-1">
           {tab === 'principais' && <SectionPrincipais m={m} />}
+          {tab === 'projecao' && projecao && <ProjecaoSection p={projecao} />}
           {tab === 'funil' && <SectionFunil m={m} />}
           {tab === 'midia' && meta && <SectionMidia meta={meta} />}
           {tab === 'gastos' && <SectionGastos m={m} />}

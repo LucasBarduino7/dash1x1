@@ -2,13 +2,14 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTransition } from 'react';
-import { BarChart3, Filter, Gauge, Users, Wallet, type LucideIcon } from 'lucide-react';
+import { BarChart3, Filter, Gauge, TrendingUp, Users, Wallet, type LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/shared/cn';
 
-export type EventoTab = 'principais' | 'funil' | 'midia' | 'gastos' | 'compradores';
+export type EventoTab = 'principais' | 'projecao' | 'funil' | 'midia' | 'gastos' | 'compradores';
 
 export const EVENTO_TABS: { key: EventoTab; label: string; icon: LucideIcon }[] = [
   { key: 'principais', label: 'Métricas Principais', icon: Gauge },
+  { key: 'projecao', label: 'Projeção da Alavanca', icon: TrendingUp },
   { key: 'funil', label: 'Funil de Vendas', icon: Filter },
   { key: 'midia', label: 'Métricas de mídia', icon: BarChart3 },
   { key: 'gastos', label: 'Gastos do evento', icon: Wallet },
